@@ -1,0 +1,11 @@
+{
+	"peers": [
+		"https://twallet.oxycoin.io"
+	],
+	"headers" : {
+		"Content-Type" : "application/json; charset=utf-8",
+		"port" : 9998
+	},
+	"begintime": [2016, 5, 24, 17, 0, 0, 0],
+	"token": "OXY"
+}

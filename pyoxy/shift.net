@@ -1,0 +1,11 @@
+{
+	"peers": [
+		"https://wallet.shiftnrg.org/"
+	],
+	"headers" : {
+		"Content-Type" : "application/json; charset=utf-8",
+		"port" : 9305
+	},
+	"begintime": [2016, 5, 24, 17, 0, 0, 0],
+	"token": "SHIFT"
+}
