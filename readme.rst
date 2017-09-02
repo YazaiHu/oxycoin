@@ -8,18 +8,18 @@ Ubuntu / OSX
 
 From development version
 
-``sudo -H pip install git+https://github.com/Moustikitos/pyoxy.git``
+``sudo -H pip install git+https://github.com/Moustikitos/oxycoin.git``
 
 If you work with ``python3``
 
-``sudo -H pip3 install git+https://github.com/Moustikitos/pyoxy.git``
+``sudo -H pip3 install git+https://github.com/Moustikitos/oxycoin.git``
 
 Windows 
 ^^^^^^^
 
 From development version
 
-``pip install git+https://github.com/Moustikitos/pyoxy.git``
+``pip install git+https://github.com/Moustikitos/oxycoin.git``
 
 Using ``pyoxy``
 ===============
@@ -60,4 +60,4 @@ Version
 
 + first release
 
-.. _MIT licence: http://htmlpreview.github.com/?https://github.com/Moustikitos/pyoxy/blob/master/pyoxy.html
+.. _MIT licence: http://htmlpreview.github.com/?https://github.com/Moustikitos/oxycoin/blob/master/pyoxy.html
