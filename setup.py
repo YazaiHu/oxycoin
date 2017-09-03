@@ -11,7 +11,7 @@ f = open("VERSION", "r")
 long_description = open("readme.rst", "r")
 kw.update(**{
 	"version": f.read().strip(),
-	"name": "Oxypytus",
+	"name": "pyoxy",
 	"keywords": ["api", "Oxycoin"],
 	"author": "Toons",
 	"author_email": "moustikitos@gmail.com",
