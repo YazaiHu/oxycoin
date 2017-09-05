@@ -5,7 +5,7 @@ from . import __PY3__, __FROZEN__, ROOT
 if not __PY3__: import api, cfg, slots, crypto
 else: from . import api, cfg, slots, crypto
 
-import sys, logging, threading
+import os, sys, logging, threading
 
 def setInterval(interval):
 	""" threaded decorator
@@ -29,6 +29,9 @@ def setInterval(interval):
 		return wrapper
 	return decorator
 
+def shortAddress(addr, sep="...", n=5):
+	return addr[:n]+sep+addr[-n:]
+
 def prettyfy(dic, tab="    "):
 	result = ""
 	if len(dic):
@@ -50,6 +53,30 @@ def prettyPrint(dic, tab="    ", log=True):
 	else:
 		sys.stdout.write("Nothing to print here\n")
 		if log: logging.info("Nothing to log here")
+
+def findNetworks():
+	try:
+		return [os.path.splitext(name)[0] for name in os.listdir(ROOT) if name.endswith(".net")]
+	except:
+		return []
+
+def chooseItem(msg, *elem):
+	n = len(elem)
+	if n > 1:
+		sys.stdout.write(msg + "\n")
+		for i in range(n):
+			sys.stdout.write("    %d - %s\n" % (i+1, elem[i]))
+		i = 0
+		while i < 1 or i > n:
+			i = input("Choose an item: [1-%d]> " % n)
+			try: i = int(i)
+			except: i = 0
+		return elem[i-1]
+	elif n == 1:
+		return elem[0]
+	else:
+		sys.stdout.write("Nothing to choose...\n")
+		return False
 
 def askYesOrNo(msg):
 	answer = ""
@@ -76,7 +103,7 @@ def unlockAccount(address, secret, secondSecret=None):
 		if account["success"]:
 			account = account["account"]
 			if account["secondSignature"]:
-				if not secondSecret: input("Enter your second secret : ")
+				if not secondSecret: secondSecret = input("Enter your second secret : ")
 				return crypto.getKeys(secondSecret)[0] == account["secondPublicKey"]
 			else:
 				return True
@@ -85,8 +112,29 @@ def unlockAccount(address, secret, secondSecret=None):
 	else:
 		return False
 
+def reprTransaction(tx):
+	return "<type-%(type)d transaction(%(token)s%(amount).8f) from %(from)s to %(to)s>" % {
+		"type": tx["type"],
+		"token": cfg.token,
+		"amount": tx["amount"]/100000000.,
+		"from": shortAddress(tx.get("address", "No one")),
+		"to": shortAddress(tx.get("recipientId", "No one"))
+	}
+
 def sendTransaction(**kw):
 	return api.post("/peer/transactions", transactions=[crypto.bakeTransaction(**kw)])
+
+def getCandidates():
+	candidates = []
+	offset = len(candidates)
+	search = api.GET.delegates(limit=201, returnKey='delegates')
+	if isinstance(search, list) and len(search):
+		while len(search) >= 201:
+			candidates.extend(search)
+			offset = len(candidates)
+			search = api.GET.delegates(limit=201, offset=offset, returnKey='delegates')
+	candidates.extend(search)
+	return candidates
 
 def getTransactions(timestamp=0, **param):
 	param.update(returnKey="transactions", limit=1000, orderBy="timestamp:desc")

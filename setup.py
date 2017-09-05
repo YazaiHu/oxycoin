@@ -22,7 +22,7 @@ kw.update(**{
 	"include_package_data": True,
 	"description": ".",
 	"long_description": long_description.read(),
-	"packages": ["pyoxy"],
+	"packages": ["pyoxy", "pyoxy.cli"],
 	"scripts": [],
 	"install_requires": ["requests", "pynacl", "pytz", "docopt"],
 	"license": "Copyright 2017 Toons, MIT licence",

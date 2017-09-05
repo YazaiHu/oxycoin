@@ -1,5 +1,6 @@
 # -*- encoding: utf8 -*-
 # © Toons
+__version__ = "0.1b"
 
 import os, imp, sys, logging
 

@@ -2,6 +2,7 @@
 	"peers": [
 		"https://twallet.oxycoin.io"
 	],
+	"explorer" : "https://texplorer.oxycoin.io",
 	"headers" : {
 		"Content-Type" : "application/json; charset=utf-8",
 		"port" : 9998

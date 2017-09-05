@@ -212,6 +212,7 @@ for endpoint in GET_NDPT:
 
 def use(network):
 	networks = [os.path.splitext(name)[0] for name in os.listdir(HOME) if name.endswith(".net")]
+
 	if len(networks) and network in networks:
 		in_ = open(os.path.join(ROOT, network+".net"), "r" if __PY3__ else "rb")
 		data = json.load(in_)
@@ -224,8 +225,14 @@ def use(network):
 		#update headers
 		cfg.headers["version"] = GET.peers.version(returnKey="version")
 		cfg.headers["nethash"] = GET.blocks.getNethash(returnKey="nethash")
-		# update logger data so network appear on log 
-		logger = logging.getLogger()
-		logger.handlers[0].setFormatter(logging.Formatter('[%s]'%network + '[%(asctime)s] %(message)s'))
+		cfg.network = network
+		cfg.hotmode = True
+		
 	else:
 		raise NetworkError("Unknown %s network properties" % network)
+		cfg.network = "..."
+		cfg.hotmode = False
+
+	# update logger data so network appear on log
+	logger = logging.getLogger()
+	logger.handlers[0].setFormatter(logging.Formatter('[%s]'%network + '[%(asctime)s] %(message)s'))

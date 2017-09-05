@@ -75,11 +75,11 @@ def getBytes(tx):
 	return result.encode() if not isinstance(result, bytes) else result
 
 def bakeTransaction(**kw):
-	try:
-		public, private = getKeys(kw["secret"])
-	except:
-		raise Exception("No secret given")
 
+	if "publicKey" in kw and "privateKey" in kw: public, private = kw["publicKey"], kw["privateKey"]
+	elif "secret" in kw: public, private = getKeys(kw["secret"])
+	else: raise Exception("Can not initialize transaction (no secret or keys given)")
+		
 	# put mandatory data
 	payload = {
 		"signSignature": None,
@@ -105,8 +105,11 @@ def bakeTransaction(**kw):
 
 	# sign payload
 	payload["signature"] = getSignature(payload, private)
-	if "secondSecret" in kw:
-		payload["signSignature"] = getSignature(payload, private)
+	if kw.get("secondSecret", None):
+		secondPublic, secondPrivate = getKeys(kw["secondSecret"])
+		payload["signSignature"] = getSignature(payload, secondPrivate)
+	elif kw.get("secondPrivateKey", None):
+		payload["signSignature"] = getSignature(payload, kw["secondPrivateKey"])
 
 	# identify payload
 	payload["id"] = getId(payload)
