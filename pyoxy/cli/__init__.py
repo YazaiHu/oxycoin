@@ -1,14 +1,14 @@
 # -*- encoding: utf8 -*-
 # © Toons
 
-__all__ = ["network", "account"]
+__all__ = ["network", "account", "delegate"]
 
 from .. import cfg, __PY3__, __FROZEN__, __version__
 import io, os, sys, shlex, docopt, logging, traceback, collections
 
 rootfolder = os.path.normpath(os.path.abspath(os.path.dirname(sys.executable) if __FROZEN__ else __path__[0]))
 
-from . import network, account
+from . import network, account, delegate
 
 __doc__ = """Welcome to pyoxy-cli [Python %(python)s / pyoxy %(pyoxy)s]
 Available commands: %(sets)s""" % {"python":sys.version.split()[0], "pyoxy":__version__, "sets": ", ".join(__all__)}

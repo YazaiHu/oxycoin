@@ -33,7 +33,6 @@ security reason only run ``POST`` and ``PUT`` entrypoints from blockchain node.
 >>> from pyoxy import api
 >>> api.use("toxy") # work on testnet
 
-
 All entrypoints can be reach using this syntax :
 
 ``api.[METHOD].[entrypoint with "/" replaced by "."](param=value, ...[returnKey=name])``
@@ -64,6 +63,41 @@ Amount is given in SATOSHI.
 >>> from pyoxy import api, util
 >>> api.use("toxy") 
 >>> util.sendTransaction(amount=100000000, recipientId="15981732227677853647X", secret="your secret")
+{'success': True}
+
+Command line interface
+^^^^^^^^^^^^^^^^^^^^^^
+
+You can use ``pyoxy`` package without writing a line of code trough command
+line interface. There are two ways to launch the CLI.
+
+**from command line**
+
+``python -m pyoxy-cli``
+
+**from python code**
+
+>>> from pyoxy import cli
+>>> cli.start()
+Welcome to pyoxy-cli [Python 3.5.1 / pyoxy 0.1b]
+Available commands: network, account, delegate
+cold@.../>
+
+**How to send Oxycoins ?**
+
+>>> from pyoxy import cli
+>>> cli.start()
+Welcome to pyoxy-cli [Python 3.5.1 / pyoxy 0.1b]
+Available commands: network, account, delegate
+cold@.../> network use
+Network(s) found:
+    1 - lisk
+    2 - oxy
+    3 - shift
+    4 - toxy
+Choose an item: [1-4]> 4
+hot@toxy/network> account link "your secret with spaces between quotes"
+hot@toxy/account[15600...1854X]> send 1.1235 12427608128403844156X
 {'success': True}
 
 Authors
