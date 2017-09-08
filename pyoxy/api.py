@@ -5,82 +5,10 @@ from . import __PY3__, __FROZEN__, ROOT, HOME
 if not __PY3__: import cfg, slots
 else: from . import cfg, slots
 
+import io, os, sys, json, random, requests, logging, traceback
+
 __TIMEOUT__ = 3
-
-import os, sys, json, random, requests, logging, traceback
-
-def getTokenPrice(token, fiat="usd"):
-	cmc_ark = json.loads(requests.get("http://coinmarketcap.northpole.ro/api/v5/%s.json" % token).text)
-	return float(cmc_ark["price"][fiat])
-
-###################
-## API endpoints ##
-###################
-
-# https://github.com/Oxycoin/api-documentation
-
-POST_NDPT = [
-	"/api/accounts/open",
-	"/api/accounts/generatePublicKey",
-	"/api/delegates/forging/enable",
-	"/api/delegates/forging/disable",
-	"/api/dapps/install",
-	"/api/dapps/uninstall",
-	"/api/dapps/launch",
-	"/api/dapps/stop",
-	"/api/multisignatures/sign",
-]
-
-PUT_NDPT = [
-	"/api/accounts/delegates",
-	"/api/transactions",
-	"/api/signatures",
-	"/api/dapps",
-]
-
-GET_NDPT = [
-	"/api/accounts",
-	"/api/accounts/getBalance",
-	"/api/accounts/getPublicKey",
-	"/api/accounts/delegates",
-	"/api/loader/status",
-	"/api/loader/status/sync",
-	"/api/transactions",
-	"/api/transactions/get",
-	"/api/transactions/unconfirmed/get",
-	"/api/transactions/unconfirmed",
-	"/api/peers",
-	"/api/peers/get",
-	"/api/peers/version",
-	"/api/blocks",
-	"/api/blocks/get",
-	"/api/blocks/getFee",
-	"/api/blocks/getFees",
-	"/api/blocks/getReward",
-	"/api/blocks/getSupply",
-	"/api/blocks/getHeight",
-	"/api/blocks/getStatus",
-	"/api/blocks/getNethash",
-	"/api/blocks/getMilestone",
-	"/api/signatures/get",
-	"/api/delegates",
-	"/api/delegates/get",
-	"/api/delegates/count",
-	"/api/delegates/voters",
-	"/api/delegates/forging/getForgedByAccount",
-	"/api/dapps",
-	"/api/dapps/get",
-	"/api/dapps/search",
-	"/api/dapps/installed",
-	"/api/dapps/installedIds",
-	"/api/dapps/installing",
-	"/api/dapps/uninstalling",
-	"/api/dapps/launched",
-	"/api/dapps/categories",
-	"/api/multisignatures",
-	"/api/multisignatures/pending",
-	"/api/multisignatures/accounts",
-]
+POST, PUT, GET = [], [], []
 
 #################
 ## API methods ##
@@ -194,17 +122,28 @@ class Endpoint:
 				setattr(ndpt, name, Endpoint(method, path))
 			ndpt = getattr(ndpt, name)
 
-POST = Endpoint(post, "/api")
-for endpoint in POST_NDPT:
-	POST.createEndpoint(POST, post, endpoint)
+def loadEntrypoints(network):
+	global POST, PUT, GET
 
-PUT = Endpoint(put, "/api")
-for endpoint in PUT_NDPT:
-	PUT.createEndpoint(PUT, put, endpoint)
+	try:
+		in_ = io.open(os.path.join(ROOT, "%s.ntpt"%network), "r" if __PY3__ else "rb")
+		entrypoints = json.load(in_)
+		in_.close()
+	except FileNotFoundError:
+		sys.stdout.write("No entrypoints file found\n")
+		return False
 
-GET = Endpoint(get, "/api")
-for endpoint in GET_NDPT:
-	GET.createEndpoint(GET, get, endpoint)
+	POST = Endpoint(post, "/api")
+	for endpoint in entrypoints["POST"]:
+		POST.createEndpoint(POST, post, endpoint)
+
+	PUT = Endpoint(put, "/api")
+	for endpoint in entrypoints["PUT"]:
+		PUT.createEndpoint(PUT, put, endpoint)
+
+	GET = Endpoint(get, "/api")
+	for endpoint in entrypoints["GET"]:
+		GET.createEndpoint(GET, get, endpoint)
 
 #######################
 ## network selection ##
@@ -220,13 +159,15 @@ def use(network):
 		cfg.__dict__.update(data)
 		cfg.verify = os.path.join(os.path.dirname(sys.executable), "cacert.pem") if __FROZEN__ else True
 		cfg.begintime = slots.datetime.datetime(*cfg.begintime, tzinfo=slots.pytz.UTC)
-		# update fees
-		cfg.fees = GET.blocks.getFees(returnKey="fees")
-		#update headers
-		cfg.headers["version"] = GET.peers.version(returnKey="version")
-		cfg.headers["nethash"] = GET.blocks.getNethash(returnKey="nethash")
-		cfg.network = network
-		cfg.hotmode = True
+		# create entrypoints
+		if loadEntrypoints(network):
+			# update fees
+			cfg.fees = GET.blocks.getFees(returnKey="fees")
+			#update headers
+			cfg.headers["version"] = GET.peers.version(returnKey="version")
+			cfg.headers["nethash"] = GET.blocks.getNethash(returnKey="nethash")
+			cfg.network = network
+			cfg.hotmode = True
 		
 	else:
 		raise NetworkError("Unknown %s network properties" % network)

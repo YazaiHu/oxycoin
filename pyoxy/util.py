@@ -5,7 +5,11 @@ from . import __PY3__, __FROZEN__, ROOT
 if not __PY3__: import api, cfg, slots, crypto
 else: from . import api, cfg, slots, crypto
 
-import os, sys, logging, threading
+import os, sys, json, logging, requests, threading
+
+def getTokenPrice(token, fiat="usd"):
+	cmc_ark = json.loads(requests.get("http://coinmarketcap.northpole.ro/api/v5/%s.json" % token).text)
+	return float(cmc_ark["price"][fiat])
 
 def setInterval(interval):
 	""" threaded decorator
@@ -88,7 +92,7 @@ def floatAmount(amount, address):
 	if amount.endswith("%"):
 		return (float(amount[:-1])/100 * float(api.GET.accounts.getBalance(address=address, returnKey="balance")) - cfg.fees["send"])/100000000.
 	elif amount[0] in ["$", "€", "£", "¥"]:
-		price = api.getTokenPrice(cfg.token, {"$":"usd", "EUR":"eur", "€":"eur", "£":"gbp", "¥":"cny"}[amount[0]])
+		price = getTokenPrice(cfg.token, {"$":"usd", "EUR":"eur", "€":"eur", "£":"gbp", "¥":"cny"}[amount[0]])
 		result = float(amount[1:])/price
 		if askYesOrNo("%s=%s%f (%s/%s=%f) - Validate ?" % (amount, cfg.token, result, cfg.token, amount[0], price)):
 			return result

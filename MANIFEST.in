@@ -1,1 +1,2 @@
 recursive-include pyoxy *.net
+recursive-include pyoxy *.ntpt
