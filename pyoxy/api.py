@@ -37,7 +37,7 @@ Returns dict
 	
 	try:
 		text = requests.get(
-			random.choice(cfg.peers) + entrypoint,
+			args.get("peer", random.choice(cfg.peers)) + entrypoint,
 			params=args,
 			headers=cfg.headers,
 			verify=cfg.verify,
@@ -62,7 +62,7 @@ def post(entrypoint, dic={}, **kw):
 	returnKey = payload.pop("returnKey", False)
 	try:
 		text = requests.post(
-			random.choice(cfg.peers)+entrypoint,
+			random.choice(cfg.peers) + entrypoint,
 			data=json.dumps(payload),
 			headers=cfg.headers,
 			verify=cfg.verify,
@@ -84,7 +84,7 @@ def put(entrypoint, dic={}, **kw):
 	returnKey = payload.pop("returnKey", False)
 	try:
 		text = requests.put(
-			random.choice(cfg.peers)+entrypoint,
+			random.choice(cfg.peers) + entrypoint,
 			data=json.dumps(payload),
 			headers=cfg.headers,
 			verify=cfg.verify,
@@ -144,6 +144,8 @@ def loadEntrypoints(network):
 	GET = Endpoint(get, "/api")
 	for endpoint in entrypoints["GET"]:
 		GET.createEndpoint(GET, get, endpoint)
+
+	return True
 
 #######################
 ## network selection ##

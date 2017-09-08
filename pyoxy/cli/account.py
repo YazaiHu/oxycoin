@@ -14,7 +14,7 @@ Subcommands:
                with saved account(s).
     unlink   : unlink account.
     status   : show information about linked account.
-    send     : send ARK amount to address. You can set a 64-char message.
+    send     : send OXY amount to address.
 '''
 
 from .. import ROOT, cfg, api, util, crypto
@@ -62,9 +62,8 @@ def send(param):
 	if not ADDRESS:
 		sys.stdout.write("No linked account\n")
 		return
-
+	# check second secret if needed
 	account = api.GET.accounts(address=ADDRESS, returnKey="account")
-
 	if account["secondSignature"] and not PRIVKEY2:
 		PUBKEY2, PRIVKEY2 = crypto.getKeys(input("Enter your second secret : ").encode("ascii"))
 		if PUBKEY2 != account["secondPublicKey"]:
@@ -81,7 +80,7 @@ def send(param):
 	payload["address"] = ADDRESS
 
 	if util.askYesOrNo("Broadcast %s?" % util.reprTransaction(payload)):
-		sys.stdout.write("Sending %s%.8f to %s...\n" % (cfg.token, payload["amount"]/100000000, payload["recipientId"]))
+		sys.stdout.write("Sending %s %.8f to %s...\n" % (cfg.token, payload["amount"]/100000000, payload["recipientId"]))
 		util.prettyPrint(api.post("/peer/transactions", transactions=[payload]), log=True)
 	else:
 		sys.stdout.write("Broadcast canceled\n")
