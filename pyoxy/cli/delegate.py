@@ -17,8 +17,7 @@ Options:
 Subcommands:
     link     : link to account using secret passphrases. If secret passphrases
                contains spaces, it must be enclosed within double quotes
-               ("secret with spaces"). If no secret given, it tries to link
-               with saved account(s).
+               ("secret with spaces").
     unlink   : unlink account.
     status   : show information about linked account.
     share    : send OXY amount to address.
