@@ -205,7 +205,7 @@ class AmountFrame(yawTtk.Frame):
 			value = 0.
 		else:
 			if what == "%":
-				value = (float(api.Account.getBalance(AddressPanel.address).get("balance", 0)) * amount/100 - cfg.fees["send"])/100000000.
+				value = (float(AddressPanel.status.get("balance", 0))*amount/100 - cfg.fees["send"])/100000000.
 			elif what in ["$", "€", "£", "¥"]:
 				price = util.getTokenPrice(cfg.token, {"$":"usd", "€":"eur", "£":"gbp", "¥":"cny"}[what])
 				value = amount / price

@@ -24,6 +24,8 @@ From development version
 Using ``pyoxy``
 ===============
 
+*Compatibility with lisk and shift is not fully supported at the moment, if you go there your on your own !*
+
 Use Oxycoin API
 ^^^^^^^^^^^^^^^
 
@@ -100,6 +102,37 @@ hot@toxy/network> account link "your secret with spaces between quotes"
 hot@toxy/account[15600...1854X]> send 1.1235 12427608128403844156X
 {'success': True}
 
+**How to run a pool ?**
+
+>>> from pyoxy import cli
+>>> cli.start()
+Welcome to pyoxy-cli [Python 3.5.1 / pyoxy 0.1b]
+Available commands: network, account, delegate
+cold@.../> network use
+Network(s) found:
+    1 - lisk
+    2 - oxy
+    3 - shift
+    4 - toxy
+Choose an item: [1-4]> 4
+hot@toxy/network> delegate link "your secret with spaces between quotes"
+hot@toxy/account[15600...1854X]> share <amoun> --options=values
+
++ ``<amount>`` value can be:
+   * relative value ie 10% of account balance
+   * absolute value using decimal numbers 45.6
+   * fiat ($60, £41, €62 or ¥125) value converted using ``coinmarketcap`` API
++ ``options`` can be :
+   * ``-b`` or ``--blacklist`` a coma-separated-address-list or a full path to newline-separated-address file
+   * ``-d`` or ``--delay`` the number of day you want to analyse voters behaviour
+   * ``-l`` or ``--lowest`` the treshold payout to trigger payment (unpaid payout are saved)
+   * ``-h`` or ``--highest`` the ceiling payout
+
+Graphical user interface
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+*COMING SOON*
+
 Authors
 =======
 
@@ -115,8 +148,16 @@ Support this project
 Version
 =======
 
+**0.2**
+
++ ``ui`` pkg released
+
 **0.1**
 
-+ first release
++ ``api`` mod released
++ ``crypto`` mod released
++ ``util`` mod released
++ ``cli`` pkg released
 
 .. _MIT licence: http://htmlpreview.github.com/?https://github.com/Moustikitos/oxycoin/blob/master/pyoxy.html
+.. role:: red
