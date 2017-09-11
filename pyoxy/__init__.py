@@ -2,20 +2,17 @@
 # © Toons
 __version__ = "0.1"
 
-import os, imp, sys, logging
+import os, imp, sys, logging, requests
 
-logging.getLogger('requests').setLevel(logging.CRITICAL)
 __PY3__ = True if sys.version_info[0] >= 3 else False
 __FROZEN__ = hasattr(sys, "frozen") or hasattr(sys, "importers") or imp.is_frozen("__main__")
 
+logging.getLogger('requests').setLevel(logging.CRITICAL)
+
 # deal with home and root directory
-HOME = os.path.normpath(os.path.abspath(os.path.dirname(sys.executable if __FROZEN__ else __file__)))
-if sys.platform.startswith("win"):
-	ROOT = HOME
-elif "HOME" in os.environ:
-	ROOT = os.environ["HOME"]
-else:
-	ROOT = os.path.join(os.enfiron["HOMEDRIVE"], os.environ["HOMEPATH"])
+ROOT = os.path.normpath(os.path.abspath(os.path.dirname(sys.executable if __FROZEN__ else __file__)))
+try: HOME = os.path.join(os.environ["HOMEDRIVE"], os.environ["HOMEPATH"])
+except: HOME = os.environ.get("HOME", ROOT)
 
 # setup a log file
 logging.basicConfig(

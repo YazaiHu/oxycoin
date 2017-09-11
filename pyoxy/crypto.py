@@ -4,7 +4,7 @@
 from nacl.bindings.crypto_sign import crypto_sign_seed_keypair, crypto_sign
 from nacl.bindings import crypto_sign_BYTES
 
-from . import __PY3__, __FROZEN__, ROOT
+from . import __PY3__, __FROZEN__
 if not __PY3__:
 	from StringIO import StringIO
 	import api, cfg, slots
@@ -56,7 +56,6 @@ def getBytes(tx):
 	# if there is a recipientId
 	if "recipientId" in tx:
 		pack(">Q", buf, (int(tx["recipientId"][:-1]),))
-		#pack_bytes(buf, unhexlify(tx["recipientId"][:-1]))
 	else:
 		pack("<Q", buf, (0,))
 

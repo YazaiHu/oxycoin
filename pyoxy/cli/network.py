@@ -56,5 +56,5 @@ def delegates(param):
 	maxlen = max([len(d["username"]) for d in delegates])
 	i = 1
 	for name, vote in sorted([(d["username"],float(d["vote"])/100000000) for d in delegates], key=lambda e:e[-1], reverse=True):
-		sys.stdout.write("    #%02d - %s: %.3f\n" % (i, name.ljust(maxlen), vote))
+		sys.stdout.write("    #%03d - %s: %.3f\n" % (i, name.ljust(maxlen), vote))
 		i += 1

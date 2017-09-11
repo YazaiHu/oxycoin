@@ -34,7 +34,6 @@ Returns dict
 	# a returnKey that match the field name
 	returnKey = args.pop("returnKey", False)
 	args = dict([k.replace("and_", "AND:") if k.startswith("and_") else k, v] for k,v in args.items())
-	
 	try:
 		text = requests.get(
 			args.get("peer", random.choice(cfg.peers)) + entrypoint,
@@ -51,7 +50,6 @@ Returns dict
 	else:
 		if data["success"]:
 			data = data[returnKey] if returnKey in data else data
-	
 	return data
 
 def post(entrypoint, dic={}, **kw):
@@ -152,7 +150,7 @@ def loadEntrypoints(network):
 #######################
 
 def use(network):
-	networks = [os.path.splitext(name)[0] for name in os.listdir(HOME) if name.endswith(".net")]
+	networks = [os.path.splitext(name)[0] for name in os.listdir(ROOT) if name.endswith(".net")]
 
 	if len(networks) and network in networks:
 		in_ = open(os.path.join(ROOT, network+".net"), "r" if __PY3__ else "rb")

@@ -23,7 +23,7 @@ Subcommands:
     share    : send OXY amount to address.
 '''
 
-from .. import ROOT, cfg, api, util, crypto
+from .. import cfg, api, util, crypto
 from . import share as _share
 
 import io, os, sys, collections
@@ -111,7 +111,7 @@ def share(param):
 			contribution = _share.ceilContribution(contribution, sum(contribution.values())*maximum/amount)
 		contribution = _share.normContribution(contribution)
 
-		round_ = _share.loadRound("%s.rnd" % DELEGATE["username"])
+		round_ = _share.loadRound("%s-%s.rnd" % (cfg.network, DELEGATE["username"]))
 		payroll = amount * 100000000.
 		minimum *= 100000000.
 

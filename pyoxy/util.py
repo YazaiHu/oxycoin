@@ -165,7 +165,7 @@ def getVoteForce(address, **kw):
 	delta = slots.datetime.timedelta(**kw)
 	timestamp_limit = slots.getTime(now - delta)
 	# get actual balance and transaction history
-	balance = float(api.GET.accounts.getBalance(address=address, returnKey="balance"))/100000000.
+	balance = kw.get("balance", float(api.GET.accounts.getBalance(address=address, returnKey="balance"))/100000000.)
 	history = getHistory(address, timestamp_limit)
 	# if no transaction over periode integrate balance over delay and return it
 	if not history:

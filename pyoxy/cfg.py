@@ -9,3 +9,4 @@ fees = {}
 network = "..."
 hotmode = False
 explorer = ""
+symbol = ""
