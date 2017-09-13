@@ -156,25 +156,42 @@ class AddressPanel(yawTtk.Frame):
 
 class SharePannel(yawTtk.Frame):
 
+	options = {}
+
 	def __init__(self, master=None, cnf={}, **kw):
 		yawTtk.Frame.__init__(self, master, cnf={}, **kw)
 		self.columnconfigure(1, weight=1)
 
-		self.delay = yawTtk.IntVar(self, 7, "%s.delay"%self._w)
+		self.delay = yawTtk.StringVar(self, "7", "%s.delay"%self._w)
 		self.lowest = yawTtk.StringVar(self, "", "%s.lowest"%self._w)
 		self.highest = yawTtk.StringVar(self, "", "%s.highest"%self._w)
 
 		yawTtk.Label(self, font=("tahoma", "8", "bold"), text="Share options").grid(row=0, column=0, columnspan=2, sticky="nsw", padx=4, pady=4)
 		yawTtk.Label(self, padding=(0,0,2,0), text="Delay in days").grid(row=1, column=0, sticky="new", padx=4)
-		yawTtk.Entry(self, font=("tahoma", "10"), padding=(2,0), relief="flat", textvariable=self.delay).grid(row=1, pady=1, column=1, sticky="w", padx=4)
+		yawTtk.Entry(self, font=("tahoma", "10"), padding=(2,0), relief="flat", textvariable=self.delay).grid(row=1, pady=1, column=1, sticky="w", padx=4).bind("<FocusOut>", lambda e,k="--delay",d=7: self.updateValue(e,k,d))
 		yawTtk.Label(self, padding=(0,0,2,0), text="Minimum payout").grid(row=2, column=0, sticky="new", padx=4)
-		yawTtk.Entry(self, font=("tahoma", "10"), padding=(2,0), relief="flat", textvariable=self.lowest).grid(row=2, pady=1, column=1, sticky="w", padx=4)
+		yawTtk.Entry(self, font=("tahoma", "10"), padding=(2,0), relief="flat", textvariable=self.lowest).grid(row=2, pady=1, column=1, sticky="w", padx=4).bind("<FocusOut>", lambda e,k="--lowest",d=0.1: self.updateValue(e,k,d))
 		yawTtk.Label(self, padding=(0,0,2,0), text="Maximum payout").grid(row=3, column=0, sticky="new", padx=4)
-		yawTtk.Entry(self, font=("tahoma", "10"), padding=(2,0), relief="flat", textvariable=self.highest).grid(row=3, pady=1, column=1, sticky="w", padx=4)
+		yawTtk.Entry(self, font=("tahoma", "10"), padding=(2,0), relief="flat", textvariable=self.highest).grid(row=3, pady=1, column=1, sticky="w", padx=4).bind("<FocusOut>", lambda e,k="--highest",d=None: self.updateValue(e,k,d))
 		yawTtk.Label(self, padding=(0,0,2,0), text="Blacklisted addresses").grid(row=4, column=0, sticky="new", padx=4)
 		self.blacklist = yawTtk.Tkinter.Text(self, font=("tahoma", "10"), width=0, height=3, border=0, highlightthickness=1, highlightbackground="grey", highlightcolor="SystemHighLight", relief="solid", wrap="word")
+		self.blacklist.bind("<FocusOut>", self.updateList)
 		self.blacklist.grid(row=4, pady=1, column=1, sticky="nesw", padx=4)
 
+	def updateValue(self, event, key, default):
+		value = event.widget.get().strip()
+		try: value = default if value == "" else int(value)
+		except: value = default
+		SharePannel.options[key] = value
+		event.widget.delete(0,"end")
+		event.widget.insert(0, "%s" % value)
+
+	def updateList(self, event):
+		value = self.blacklist.get("1.0", "end-1c").strip()
+		value = value.replace("\n", ",").replace(" ", ",").replace("\t", ",")
+		SharePannel.options["--blacklist"] = ",".join([a for a in value.split(",") if a != ""])
+		self.blacklist.delete("1.0", "end")
+		self.blacklist.insert("1.0", SharePannel.options["--blacklist"] )
 
 class AmountFrame(yawTtk.Frame):
 

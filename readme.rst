@@ -24,7 +24,7 @@ From development version
 Using ``pyoxy``
 ===============
 
-*Compatibility with lisk and shift is not fully supported at the moment, if you go there your on your own !*
+*Compatibility with lisk and shift is not fully supported at the moment, if you go there you're on your own !*
 
 Use Oxycoin API
 ^^^^^^^^^^^^^^^
