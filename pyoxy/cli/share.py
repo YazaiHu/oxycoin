@@ -5,23 +5,6 @@ from .. import __PY3__, __FROZEN__, ROOT, api, cfg, util
 
 import os, io, sys, json
 
-def dumpRound(round, name):
-	filename = os.path.join(ROOT, name)
-	out = io.open(filename, "w" if __PY3__ else "wb")
-	json.dump(round, out, indent=2)
-	out.close()
-	return os.path.basename(filename)
-
-def loadRound(name):
-	filename = os.path.join(ROOT, name)
-	if os.path.exists(filename):
-		in_ = io.open(filename, "r" if __PY3__ else "rb")
-		round_ = json.load(in_)
-		in_.close()
-		return round_
-	else:
-		return {}
-
 def ceilContribution(contribution, ceil):
 	cumul = 0
 	# first filter
@@ -37,7 +20,7 @@ def ceilContribution(contribution, ceil):
 			i += 1
 			n -= 1
 			contribution[address] = ceil
-			bounty = (cumul - abs(ceil - force)) / n
+			bounty = (cumul - abs(ceil - force)) / max(1, n)
 		else:
 			break
 	for address,force in untouched_pairs[i:]:
@@ -46,5 +29,5 @@ def ceilContribution(contribution, ceil):
 	return contribution
 
 def normContribution(contribution):
-	k = 1.0/sum(contribution.values())
+	k = 1.0/max(1, sum(contribution.values()))
 	return dict((a, s*k) for a,s in contribution.items())

@@ -1,9 +1,11 @@
 # -*- encoding: utf8 -*-
 # © Toons
 
-from .. import api, cfg, util, crypto
+from .. import __PY3__, api, cfg, util, crypto
+from ..cli import share
+from . import ROOT
 
-import sys, yawTtk, webbrowser
+import io, os, sys, json, time, yawTtk, webbrowser
 
 
 class DataView(yawTtk.Tree):
@@ -12,6 +14,9 @@ class DataView(yawTtk.Tree):
 		yawTtk.Tree.__init__(self, parent, cnf, **kw)
 		self.tag_configure("even", background="lavender")
 		self.tag_configure("odd", background="lightblue")
+		self.tag_configure("treating", background="SystemHighLight", foreground="white")
+		self.tag_configure("okay", background="lightgreen")
+		self.tag_configure("error", background="red", foreground="white")
 		self.rows = []
 		self.headers = []
 		self.__data_headings = []
@@ -20,7 +25,7 @@ class DataView(yawTtk.Tree):
 
 	def configureHeader(self):
 		self.__data_headings = self.headers if len(self.headers) else \
-		                       list(rows[0].keys()) if len(self.rows) else \
+		                       list(self.rows[0].keys()) if len(self.rows) else \
 		                       []
 		self['columns'] = " ".join(["{%s}"%h for h in self.__data_headings])
 		for i in range(len(self.__data_headings)):
@@ -39,7 +44,7 @@ class DataView(yawTtk.Tree):
 		self.__sort_meaning = meaning
 		# sort data if asked
 		if sortkey != None:
-			rows = sorted(self.rows, key=lambda e:e.get(sortkey, ""), reverse=True if meaning == "ASC" else False)
+			rows = sorted(self.rows, key=lambda e:e.get(sortkey, ""), reverse=False if meaning == "ASC" else True)
 		else:
 			rows = self.rows
 		# populate data
@@ -73,23 +78,18 @@ class AddressPanel(yawTtk.Frame):
 "AI6kxuOJQjY7/tQYs+0VnpC0UYLJyYlMvV6NYWpqIjtEwXnoQ0TWB5SFsxe53LMxiMinyLIjqcaY5RAglUpNkzwdVOBzXwC8jByPAOCcKxtj3pI86/VsDsALf9DBKEFE3pHsD0H/a4rIRy4tvTE7O7vrzmkdgJKk"\
 "qhKA8zXu+xBVaDgDYO/q6uQDBt5+5L+ER487awatf6VW7KoAAAAASUVORK5CYII="
 		yawTtk.Frame.__init__(self, master, cnf={}, **kw)
-		self.columnconfigure(3, weight=1)
+		self.columnconfigure(0, minsize=160)
+		self.columnconfigure(1, weight=1, minsize=70)
+		self.columnconfigure(2, minsize=120)
 
 		self.wallet = yawTtk.StringVar(self, "", "%s.wallet"%self._w)
 		self.balance = yawTtk.StringVar(self, "", "%s.balance"%self._w)
 
-		yawTtk.Label(self, font=("tahoma", "8", "bold"), text="Wallet address").grid(row=0, column=0, sticky="nesw", padx=4, pady=4)
-		self.combo = yawTtk.Combobox(self, width=28, font=("courrier-new", "8", "bold"), textvariable=self.wallet).grid(row=0, column=1, sticky="nesw", padx=4, pady=4)
-		yawTtk.Entry(self, font=("courrier-new", "8", "bold"), state="readonly", justify="right", textvariable=self.balance).grid(row=0, column=2, sticky="nesw", pady=4)
-		self.label = yawTtk.Label(self, cursor="hand2", relief="solid", padding=(5,0), compound="image", image=self._cloud).grid(row=0, column=3, sticky="nes", padx=4, pady=4)
+		yawTtk.Label(self, font=("tahoma", "8", "bold"), text="Address").grid(row=0, column=0, columnspan=2, sticky="nesw", padx=4, pady=4)
+		self.combo = yawTtk.Combobox(self, width=-1, textvariable=self.wallet).grid(row=1, column=0, sticky="nesw", padx=4, pady=4)
+		self.label = yawTtk.Label(self, cursor="hand2", relief="solid", padding=(5,0), compound="image", image=self._cloud).grid(row=1, column=1, sticky="nsw", pady=4)
+		yawTtk.Entry(self, font=("courrier-new", "8", "bold"), state="readonly", justify="right", textvariable=self.balance).grid(row=1, column=2, sticky="nes", padx=4, pady=4)
 		self.label.bind("<Button-1>", lambda e:webbrowser.open(cfg.explorer+"/address/"+self.wallet.get()))
-
-		# this line enable to launch an infinite threaded loop for widget update
-		@util.setInterval(2)
-		def _update(obj):
-			obj.update()
-		# __stop_update is an Event to set so it stop infinite loop
-		self.__stop_update = _update(self)
 
 	def update(self, *args, **kw):
 		value = self.wallet.get().strip()
@@ -149,12 +149,8 @@ class AddressPanel(yawTtk.Frame):
 		try: return float(AddressPanel.status.get("balance", False))/100000000.
 		except: return False
 
-	def destroy(self):
-		self.__stop_update.set()
-		yawTtk.Frame.destroy(self)
 
-
-class SharePannel(yawTtk.Frame):
+class OptionPannel(yawTtk.Frame):
 
 	options = {}
 
@@ -162,54 +158,84 @@ class SharePannel(yawTtk.Frame):
 		yawTtk.Frame.__init__(self, master, cnf={}, **kw)
 		self.columnconfigure(1, weight=1)
 
-		self.delay = yawTtk.StringVar(self, "7", "%s.delay"%self._w)
-		self.lowest = yawTtk.StringVar(self, "", "%s.lowest"%self._w)
-		self.highest = yawTtk.StringVar(self, "", "%s.highest"%self._w)
-
-		yawTtk.Label(self, font=("tahoma", "8", "bold"), text="Share options").grid(row=0, column=0, columnspan=2, sticky="nsw", padx=4, pady=4)
+		self.delay = yawTtk.StringVar(self, "%s"%OptionPannel.options.get("delay", 7), "%s.delay"%self._w)
+		self.lowest = yawTtk.StringVar(self, "%s"%OptionPannel.options.get("lowest", (cfg.fees["send"]/100000000)), "%s.lowest"%self._w)
+		self.highest = yawTtk.StringVar(self, "%s"%OptionPannel.options.get("highest", None), "%s.highest"%self._w)
+		yawTtk.Label(self, font=("tahoma", "8", "bold"), text="Options").grid(row=0, column=0, columnspan=2, sticky="nsw", padx=4, pady=4)
 		yawTtk.Label(self, padding=(0,0,2,0), text="Delay in days").grid(row=1, column=0, sticky="new", padx=4)
-		yawTtk.Entry(self, font=("tahoma", "10"), padding=(2,0), relief="flat", textvariable=self.delay).grid(row=1, pady=1, column=1, sticky="w", padx=4).bind("<FocusOut>", lambda e,k="--delay",d=7: self.updateValue(e,k,d))
+		yawTtk.Entry(self, font=("tahoma", "10"), padding=(2,0), relief="flat", textvariable=self.delay).grid(row=1, pady=1, column=1, sticky="w", padx=4).bind("<FocusOut>", lambda e,k="delay",d=7: self.updateValue(e,k,d))
 		yawTtk.Label(self, padding=(0,0,2,0), text="Minimum payout").grid(row=2, column=0, sticky="new", padx=4)
-		yawTtk.Entry(self, font=("tahoma", "10"), padding=(2,0), relief="flat", textvariable=self.lowest).grid(row=2, pady=1, column=1, sticky="w", padx=4).bind("<FocusOut>", lambda e,k="--lowest",d=0.1: self.updateValue(e,k,d))
+		yawTtk.Entry(self, font=("tahoma", "10"), padding=(2,0), relief="flat", textvariable=self.lowest).grid(row=2, pady=1, column=1, sticky="w", padx=4).bind("<FocusOut>", lambda e,k="lowest",d=0.1: self.updateValue(e,k,d))
 		yawTtk.Label(self, padding=(0,0,2,0), text="Maximum payout").grid(row=3, column=0, sticky="new", padx=4)
-		yawTtk.Entry(self, font=("tahoma", "10"), padding=(2,0), relief="flat", textvariable=self.highest).grid(row=3, pady=1, column=1, sticky="w", padx=4).bind("<FocusOut>", lambda e,k="--highest",d=None: self.updateValue(e,k,d))
+		yawTtk.Entry(self, font=("tahoma", "10"), padding=(2,0), relief="flat", textvariable=self.highest).grid(row=3, pady=1, column=1, sticky="w", padx=4).bind("<FocusOut>", lambda e,k="highest",d=None: self.updateValue(e,k,d))
 		yawTtk.Label(self, padding=(0,0,2,0), text="Blacklisted addresses").grid(row=4, column=0, sticky="new", padx=4)
 		self.blacklist = yawTtk.Tkinter.Text(self, font=("tahoma", "10"), width=0, height=3, border=0, highlightthickness=1, highlightbackground="grey", highlightcolor="SystemHighLight", relief="solid", wrap="word")
 		self.blacklist.bind("<FocusOut>", self.updateList)
 		self.blacklist.grid(row=4, pady=1, column=1, sticky="nesw", padx=4)
+		self.blacklist.insert("1.0", ",".join(OptionPannel.options.get("blacklist", [])))
+
+	def loadConf(self):
+		self.blacklist.delete("1.0", "end")
+		OptionPannel.options = util.loadJson("%s.json" % AddressPanel.status.get("username", "config"))
+		self.delay.set("%s"%OptionPannel.options.get("delay", 7))
+		self.lowest.set("%s"%OptionPannel.options.get("lowest", (cfg.fees["send"]/100000000)))
+		self.highest.set("%s"%OptionPannel.options.get("highest", None))
+		self.blacklist.insert("1.0", ",".join(OptionPannel.options.get("blacklist", [])))
+
+	def saveConf(self):
+		util.dumpJson(OptionPannel.options, "%s.json"%AddressPanel.status.get("username", "config"))
 
 	def updateValue(self, event, key, default):
 		value = event.widget.get().strip()
 		try: value = default if value == "" else int(value)
 		except: value = default
-		SharePannel.options[key] = value
+		OptionPannel.options[key] = value
 		event.widget.delete(0,"end")
 		event.widget.insert(0, "%s" % value)
 
 	def updateList(self, event):
 		value = self.blacklist.get("1.0", "end-1c").strip()
 		value = value.replace("\n", ",").replace(" ", ",").replace("\t", ",")
-		SharePannel.options["--blacklist"] = ",".join([a for a in value.split(",") if a != ""])
+		OptionPannel.options["blacklist"] = [a.strip() for a in value.split(",") if a != ""]
 		self.blacklist.delete("1.0", "end")
-		self.blacklist.insert("1.0", SharePannel.options["--blacklist"] )
+		self.blacklist.insert("1.0", ",".join(OptionPannel.options["blacklist"]))
 
-class AmountFrame(yawTtk.Frame):
+	def disable(self):
+		for widget in self.children.values():
+			if isinstance(widget, yawTtk.Entry):
+				widget.state("disabled")
+			self.blacklist["state"] = "disabled"
+
+	def enable(self):
+		for widget in self.children.values():
+			if isinstance(widget, yawTtk.Entry):
+				widget.state("!disabled")
+			self.blacklist["state"] = "normal"
+
+	def destroy(self):
+		self.saveConf()
+		yawTtk.Frame.destroy(self)
+
+
+class ShareFrame(yawTtk.Frame):
+
+	satoshi = 0
 
 	def __init__(self, master=None, cnf={}, **kw):
 		yawTtk.Frame.__init__(self, master, cnf={}, **kw)
-		self.columnconfigure(0, weight=1)
-		self.columnconfigure(1, weight=0, minsize=50)
-		self.columnconfigure(2, weight=0, minsize=120)
+		self.columnconfigure(0, minsize=160)
+		self.columnconfigure(1, weight=1, minsize=60)
+		self.columnconfigure(2, minsize=120)
 
 		self.amount = yawTtk.DoubleVar(self, 0., "%s.amount"%self._w)
 		self.value = yawTtk.StringVar(self, "%s 0.00000000" % cfg.symbol, "%s.value"%self._w)
 		self.what = yawTtk.StringVar(self, cfg.symbol, "%s.what"%self._w)
 		self.satoshi = 0
 
-		yawTtk.Label(self, padding=2, text="amount", background="lightgreen", font=("tahoma", 8, "bold")).grid(row=0, column=0, columnspan=3, pady=4, sticky="nesw")
-		yawTtk.Entry(self, textvariable=self.amount, justify="right").grid(row=1, column=0, pady=4, sticky="nesw")
-		yawTtk.Combobox(self, textvariable=self.what, state="readonly", values=(cfg.symbol, "$", "€", "£", "¥", "%"), width=-1).grid(row=1, column=1, padx=4, pady=4, sticky="nesw")
-		yawTtk.Label(self, textvariable=self.value, relief="solid").grid(row=1, column=2, pady=4, sticky="nesw")
+		yawTtk.Label(self, font=("tahoma", "8", "bold"), text="Share").grid(row=0, column=0, columnspan=3, sticky="nesw", padx=4, pady=4)
+		yawTtk.Entry(self, width=-1, textvariable=self.amount, justify="right").grid(row=1, column=0, sticky="nesw", padx=4, pady=4)
+		yawTtk.Combobox(self, textvariable=self.what, state="readonly", values=(cfg.symbol, "$", "€", "£", "¥", "%"), width=5).grid(row=1, column=1, pady=4, sticky="nsw")
+		yawTtk.Entry(self, font=("courrier-new", "8", "bold"), state="readonly", justify="right", textvariable=self.value).grid(row=1, column=2, sticky="nesw", padx=4, pady=4)
 
 		self.amount.trace("w", self.update)
 		self.what.trace("w", self.update)
@@ -229,14 +255,14 @@ class AmountFrame(yawTtk.Frame):
 			else:
 				value = amount
 		finally:
-			self.satoshi = 100000000.*max(0., value)
+			ShareFrame.satoshi = 100000000.*max(0., value)
 			self.value.set("%s %.8f" % (cfg.symbol, value))
 
 	def get(self):
-		return self.satoshi
+		return ShareFrame.satoshi
 
 
-class SecretFrame(yawTtk.Frame):
+class Secret(yawTtk.Frame):
 
 	def __init__(self, master=None, cnf={}, **kw):
 		yawTtk.Frame.__init__(self, master, cnf={}, **kw)
@@ -249,26 +275,146 @@ class SecretFrame(yawTtk.Frame):
 
 		self.secret = yawTtk.Tkinter.Text(self, font=("tahoma", "10"), width=0, height=2, border=2, highlightthickness=1, highlightbackground="grey", highlightcolor="SystemHighLight", relief="flat", wrap="word")
 		self.secret.grid(row=0, column=0, sticky="nesw", padx=4)
-		self.border = yawTtk.Frame(self, background="SystemHighLight").grid(row=1, column=0, sticky="nesw", padx=4)
+		self.border = yawTtk.Frame(self).grid(row=1, column=0, sticky="nesw", padx=4)
+		self.border["background"] = "SystemHighLight"
 
-		# this line enable to launch an infinite threaded loop for widget update
-		@util.setInterval(2)
-		def _update(obj):
-			obj.update()
-		# __stop_update is an Event to set so it stop infinite loop
-		self.__stop_update = _update(self)
-		self.update()
 
-	def getKeys(self):
-		return crypto.getKeys(self.secret.get("1.0", "end-1c"))
+class SecretFrame(yawTtk.Frame):
+
+	secret = None
+	secondSecret = None
+
+	def __init__(self, master=None, cnf={}, **kw):
+		yawTtk.Frame.__init__(self, master, cnf={}, **kw)
+		self.columnconfigure(1, weight=1)
+
+		yawTtk.Label(self, font=("tahoma", "8", "bold"), text="Secrets").grid(row=0, column=0, columnspan=2, sticky="nesw", padx=4, pady=4)
+		yawTtk.Label(self, padding=(0,0,2,0), text="First").grid(row=1, column=0, sticky="new", padx=4)
+		self.first = Secret(self).grid(row=1, column=1, sticky="nesw", pady=4)
+		self.label = yawTtk.Label(self, padding=(0,0,2,0), text="Second")
+		self.second = Secret(self)
 
 	def update(self):
-		self.border["background"] = "lightgreen" if self.getKeys()[0] == AddressPanel.status.get("publicKey", "") else "red"
-		self.secret["highlightbackground"] = self.border["background"]
+		secret = self.first.secret.get("1.0", "end-1c")
+		if crypto.getKeys(secret)[0] == AddressPanel.status.get("publicKey", ""):
+			SecretFrame.secret = secret
+			self.first.border["background"] = "lightgreen"
+		else:
+			SecretFrame.secret = None
+			self.first.border["background"] = "red"
+		self.first.secret["highlightbackground"] = self.first.border["background"]
+
+		if AddressPanel.status.get("secondPublicKey", False):
+			self.second.grid(row=2, column=1, sticky="nesw", pady=4)
+			self.label.grid(row=2, column=0, sticky="new", padx=4)
+			self.first.grid_configure(pady=0)
+			secondSecret = self.second.secret.get("1.0", "end-1c")
+			if crypto.getKeys(secondSecret)[0] == AddressPanel.status.get("secondPublicKey", ""):
+				SecretFrame.secondSecret = secondSecret
+				self.second.border["background"] = "lightgreen"
+			else:
+				SecretFrame.secondSecret = None
+				self.second.border["background"] = "red"
+			self.second.secret["highlightbackground"] = self.second.border["background"]
+		else:
+			self.second.grid_forget()
+			self.label.grid_forget()
+			self.first.grid_configure(pady=4)
+			self.second.border["background"] = self.first.border["background"]
+			self.second.secret["highlightbackground"] = self.first.border["background"]
 
 	def check(self):
-		return True if self.border["background"] == "lightgreen" else False
+		return True if self.first.border["background"] == self.second.border["background"] == "lightgreen" else False
 
-	def destroy(self):
-		self.__stop_update.set()
-		yawTtk.Frame.destroy(self)
+
+class PayoutFrame(yawTtk.Frame):
+
+	voterforces = {}
+	busy = False
+
+	def __init__(self, master=None, cnf={}, **kw):
+		yawTtk.Frame.__init__(self, master, cnf={}, **kw)
+		self.columnconfigure(0, weight=1)
+		self.rowconfigure(1, weight=1)
+
+		yawTtk.Label(self, font=("tahoma", "8", "bold"), text="Payroll").grid(row=0, column=0, sticky="nesw", padx=4, pady=4)
+		frame = yawTtk.Frame(self, border=0, padding=4, height=0).grid(row=1, column=0, columnspan=2, sticky="nesw")
+		frame.columnconfigure(0, weight=1)
+		frame.rowconfigure(0, weight=1)
+		self.data = DataView(frame, padding=0, height=0, show="headings").grid(row=0, column=0, sticky="nesw")
+		self.data.headers = ["address", "payout", "weight (%)", "send", "saved"]
+		self.data.configureHeader()
+		yawTtk.Autoscrollbar(frame, target=self.data, orient="horizontal").grid(row=1, column=0, sticky="nesw")
+		yawTtk.Autoscrollbar(frame, target=self.data, orient="vertical").grid(row=0, column=1, sticky="nesw")
+
+	def analyse(self):
+		PayoutFrame.busy = True
+		self.data.rows = []
+		self.data.populate()
+		delay = OptionPannel.options.get("delay", 7)
+		PayoutFrame.voterforces = dict([address, util.getVoteForce(address, days=delay)] for address in [v["address"] for v in AddressPanel.voters])
+		PayoutFrame.busy = False
+
+	def compute(self):
+		amount = ShareFrame.satoshi
+		maximum = OptionPannel.options.get("highest", None)
+		blacklist = OptionPannel.options.get("blacklist", [])
+		voterforces =  dict([a,f] for a,f in PayoutFrame.voterforces.items() if a not in blacklist)
+		if maximum:
+			contribution = share.ceilContribution(voterforces, sum(voterforces.values())*maximum*100000000/amount)
+			return share.normContribution(contribution).items()
+		return share.normContribution(voterforces).items()
+
+	def update(self):
+		PayoutFrame.busy = True
+		payroll = ShareFrame.satoshi
+
+		self.data.rows = []
+		if payroll > 100000000:
+			minimum = OptionPannel.options.get("lowest", cfg.fees["send"]/100000000)*100000000
+			saved_payout = util.loadJson("%s-%s.rnd" % (cfg.network, AddressPanel.status.get("username", "")))
+
+			for address, weight in self.compute():
+				saved = saved_payout.get(address, 0.)
+				payout = payroll * weight + saved*100000000 - cfg.fees["send"]
+				row = {"address":address, "weight (%)":round(weight*100,2), "payout":round(payout/100000000, 8), "send":"Yes", "saved":saved}
+				if payout > minimum:
+					saved_payout.pop(address, None)
+					self.data.rows.append(row)
+				elif payout + cfg.fees["send"] > 0:
+					saved_payout[address] = payout + cfg.fees["send"]
+					row["send"] = "No"
+					row["payout"] = round(saved_payout[address]/100000000, 8)
+					self.data.rows.append(row)
+		self.data.populate(sortkey="weight (%)", meaning="DESC")
+		PayoutFrame.busy = False
+
+	def broadcast(self):
+		if not PayoutFrame.busy:
+			PayoutFrame.busy = True
+			to_save = {}
+			for elem in self.data.walk(''):
+				self.data.see(elem)
+				self.data.item(elem, tags=("treating"))
+				row = self.data.set(elem)
+				if row["send"] == "Yes":
+					payload = crypto.bakeTransaction(
+						amount=row["payout"]*100000000,
+						publicKey=crypto.getKeys(SecretFrame.secret)[0],
+						secret=SecretFrame.secret,
+						secondSecret=SecretFrame.secondSecret,
+						recipientId=row["address"]
+					)
+					resp = api.post("/peer/transactions", transactions=[payload])
+					if resp["success"]:
+						self.data.item(elem, tags=("okay"))
+						self.data.set(elem, "send", "OK")
+					else:
+						self.data.item(elem, tags=("error"))
+						self.data.set(elem, "send", "ERROR")
+				elif row["send"] == "No":
+					to_save[row["address"]] = row["payout"]
+					self.data.set(elem, "send", "SAVED")
+			if len(to_save):
+				util.dumpJson(to_save,"%s-%s.rnd" % (cfg.network, AddressPanel.status.get("username", "")))
+			PayoutFrame.busy = False

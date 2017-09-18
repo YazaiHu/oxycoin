@@ -5,11 +5,12 @@ from . import __PY3__, __FROZEN__, ROOT
 if not __PY3__: import api, cfg, slots, crypto
 else: from . import api, cfg, slots, crypto
 
-import os, sys, json, logging, requests, threading
+import io, os, sys, json, logging, requests, threading
 
 def getTokenPrice(token, fiat="usd"):
-	cmc_ark = json.loads(requests.get("http://coinmarketcap.northpole.ro/api/v5/%s.json" % token).text)
-	return float(cmc_ark["price"][fiat])
+	cmc_ark = json.loads(requests.get("https://api.coinmarketcap.com/v1/ticker/"+token+"/?convert="+fiat.uppercase()).text)
+	try: return float(cmc_ark[0]["price_%s"%fiat.lowercase()])
+	except: return 1.
 
 def setInterval(interval):
 	""" threaded decorator
@@ -57,6 +58,23 @@ def prettyPrint(dic, tab="    ", log=True):
 	else:
 		sys.stdout.write("Nothing to print here\n")
 		if log: logging.info("Nothing to log here")
+
+def dumpJson(cnf, name):
+	filename = os.path.join(ROOT, name)
+	out = io.open(filename, "w" if __PY3__ else "wb")
+	json.dump(cnf, out, indent=2)
+	out.close()
+	return os.path.basename(filename)
+
+def loadJson(name):
+	filename = os.path.join(ROOT, name)
+	if os.path.exists(filename):
+		in_ = io.open(filename, "r" if __PY3__ else "rb")
+		round_ = json.load(in_)
+		in_.close()
+		return round_
+	else:
+		return {}
 
 def findNetworks():
 	try:

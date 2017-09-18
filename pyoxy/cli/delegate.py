@@ -111,7 +111,7 @@ def share(param):
 			contribution = _share.ceilContribution(contribution, sum(contribution.values())*maximum/amount)
 		contribution = _share.normContribution(contribution)
 
-		round_ = _share.loadRound("%s-%s.rnd" % (cfg.network, DELEGATE["username"]))
+		round_ = util.loadJson("%s-%s.rnd" % (cfg.network, DELEGATE["username"]))
 		payroll = amount * 100000000.
 		minimum *= 100000000.
 
@@ -141,7 +141,7 @@ def share(param):
 						recipientId=recipientId,
 					)
 					util.prettyPrint(api.post("/peer/transactions", transactions=[payload]), log=True)
-				_share.dumpRound(round_, "%s.rnd" % DELEGATE["username"])
+				util.dumpJson(round_, "%s.rnd" % DELEGATE["username"])
 			else:
 				sys.stdout.write("Broadcast canceled\n")
 

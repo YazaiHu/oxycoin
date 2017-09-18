@@ -128,10 +128,12 @@ hot@toxy/account[15600...1854X]> share <amoun> --options=values
    * ``-l`` or ``--lowest`` the treshold payout to trigger payment (unpaid payout are saved)
    * ``-h`` or ``--highest`` the ceiling payout
 
-Graphical user interface
-^^^^^^^^^^^^^^^^^^^^^^^^
+Graphical user interface (python 3.x)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-*COMING SOON*
+Run the pyoxy payout user interface: `python -m pyoxy-ui`
+
+.. image:: https://github.com/Moustikitos/oxycoin/raw/master/pyoxy-ui.png
 
 Authors
 =======
