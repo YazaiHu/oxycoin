@@ -131,7 +131,7 @@ hot@toxy/account[15600...1854X]> share <amoun> --options=values
 Graphical user interface (python 3.x)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Run the pyoxy payout user interface: `python -m pyoxy-ui`
+Run the pyoxy payout user interface: ``python -m pyoxy-ui``
 
 .. image:: https://github.com/Moustikitos/oxycoin/raw/master/pyoxy-ui.png
 
