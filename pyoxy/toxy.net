@@ -8,5 +8,8 @@
 		"port" : 9998
 	},
 	"begintime": [2016, 5, 24, 17, 0, 0, 0],
-	"token": "OXY"
+	"token" : "OXY",
+	"symbol" : "OXY",
+	"delegate": 201,
+	"marker": "X"
 }

@@ -176,14 +176,14 @@ class OptionPannel(yawTtk.Frame):
 
 	def loadConf(self):
 		self.blacklist.delete("1.0", "end")
-		OptionPannel.options = util.loadJson("%s.json" % AddressPanel.status.get("username", "config"))
+		OptionPannel.options = util.loadJson("%s-%s.json" % (cfg.network, AddressPanel.status.get("username", "config")))
 		self.delay.set("%s"%OptionPannel.options.get("delay", 7))
 		self.lowest.set("%s"%OptionPannel.options.get("lowest", (cfg.fees["send"]/100000000)))
 		self.highest.set("%s"%OptionPannel.options.get("highest", None))
 		self.blacklist.insert("1.0", ",".join(OptionPannel.options.get("blacklist", [])))
 
 	def saveConf(self):
-		util.dumpJson(OptionPannel.options, "%s.json"%AddressPanel.status.get("username", "config"))
+		util.dumpJson(OptionPannel.options, "%s-%s.json" % (cfg.network, AddressPanel.status.get("username", "config")))
 
 	def updateValue(self, event, key, default):
 		value = event.widget.get().strip()
@@ -234,7 +234,7 @@ class ShareFrame(yawTtk.Frame):
 
 		yawTtk.Label(self, font=("tahoma", "8", "bold"), text="Share").grid(row=0, column=0, columnspan=3, sticky="nesw", padx=4, pady=4)
 		yawTtk.Entry(self, width=-1, textvariable=self.amount, justify="right").grid(row=1, column=0, sticky="nesw", padx=4, pady=4)
-		yawTtk.Combobox(self, textvariable=self.what, state="readonly", values=(cfg.symbol, "$", "€", "£", "¥", "%"), width=5).grid(row=1, column=1, pady=4, sticky="nsw")
+		self.combo = yawTtk.Combobox(self, textvariable=self.what, state="readonly", values=(cfg.symbol, "$", "€", "£", "¥", "%"), width=5).grid(row=1, column=1, pady=4, sticky="nsw")
 		yawTtk.Entry(self, font=("courrier-new", "8", "bold"), state="readonly", justify="right", textvariable=self.value).grid(row=1, column=2, sticky="nesw", padx=4, pady=4)
 
 		self.amount.trace("w", self.update)
@@ -254,9 +254,9 @@ class ShareFrame(yawTtk.Frame):
 				value = amount / price
 			else:
 				value = amount
-		finally:
-			ShareFrame.satoshi = 100000000.*max(0., value)
-			self.value.set("%s %.8f" % (cfg.symbol, value))
+		# finally:
+		ShareFrame.satoshi = 100000000.*max(0., value)
+		self.value.set("%s %.8f" % (cfg.symbol, value))
 
 	def get(self):
 		return ShareFrame.satoshi
@@ -345,7 +345,7 @@ class PayoutFrame(yawTtk.Frame):
 		self.data.headers = ["address", "payout", "weight (%)", "send", "saved"]
 		self.data.configureHeader()
 		yawTtk.Autoscrollbar(frame, target=self.data, orient="horizontal").grid(row=1, column=0, sticky="nesw")
-		yawTtk.Autoscrollbar(frame, target=self.data, orient="vertical").grid(row=0, column=1, sticky="nesw")
+		yawTtk.Autoscrollbar(frame, target=self.data, orient="vertical").grid(row=0, column=1, rowspan=2, sticky="nesw")
 
 	def analyse(self):
 		PayoutFrame.busy = True

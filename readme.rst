@@ -150,6 +150,10 @@ Support this project
 Version
 =======
 
+**0.3**
+
++ Added ``lisk`` and ``shift`` network
+
 **0.2**
 
 + ``ui`` pkg released

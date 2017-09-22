@@ -33,7 +33,7 @@ def getKeys(secret, seed=None):
 
 def getAddress(public):
 	seed = hashlib.sha256(unhexlify(public)).digest()
-	return "%sX" % struct.unpack("<Q", seed[:8])
+	return "%s%s" % (struct.unpack("<Q", seed[:8])+(cfg.marker,))
 
 def getSignature(tx, private):
 	return hexlify(crypto_sign(hashlib.sha256(getBytes(tx)).digest(), unhexlify(private))[:crypto_sign_BYTES])

@@ -4,7 +4,7 @@
 import os, sys
 sys.path.append(os.path.join(os.path.dirname(sys.executable), "site-packages.zip"))
 
-from pyoxy import api, util
+from pyoxy import api, util, cfg
 from pyoxy.ui import widgets
 
 if __name__ == "__main__":
@@ -18,15 +18,13 @@ if __name__ == "__main__":
 	"oSEAfD5fDOD4+PgUsACUQppnZ2frUkoaGxvTTU1N91ZXV4uAwcFBYrFYRNO0x0IIDMN4eeMqLy0tuaWlpQWLm7Ztr5eVlXm8Xu8zv9/fcHR0hGVZ32Ox2O2CRrlqcXl52W9ZlqWqKnV1dQ+CweB0IBB4VVVV1aAo"\
 	"Cvl8fqcgDoVC1x0kk0mSySQA4+PjEZ/P9wSoB346jvNpf39/PpPJvANoaWlhbW0NgF/89hAL3mpSPAAAAABJRU5ErkJggg=="\
 
-	# connect to mainnet
-	api.use("oxy")
+	api.use("toxy")
 
 	# main window
 	root = widgets.yawTtk.Tkinter.Tk()
 	if not api.__PY3__:
 		root.tk.eval("package require Img")
 	root.withdraw()
-	root.title(u"Oxycoin Pool Payout")
 
 	# tweak data view layout
 	style = widgets.yawTtk.Style()
@@ -168,6 +166,35 @@ if __name__ == "__main__":
 		__heartbeat.set()
 		__heartbeat.lock()
 		sys.exit()
+
+	def useNetwork(network):
+		try:
+			api.use(network)
+		except:
+			pass
+		else:
+			toplevel.tk.setvar("ui.network", network)
+
+			combovalues = amount.combo["values"]
+			amount.combo.configure(values=(cfg.symbol, ) + combovalues[1:])
+			if amount.what.get() not in amount.combo["values"]:
+				amount.what.set(cfg.symbol)
+			else:
+				amount.what.set(amount.what.get())
+			toplevel.title("%s Pool Payout"%network.capitalize())
+
+	# menu widget
+	menubar = widgets.yawTtk.Menu(root)
+	mainmenu = widgets.yawTtk.Menu(menubar, tearoff=False, name="mainmenu")
+	networkmenu = widgets.yawTtk.Menu(menubar, tearoff=False, name="networkmenu")
+	for net in util.findNetworks():
+		networkmenu.add("radiobutton", variable="ui.network", label=net, value=net, command=lambda n=net:useNetwork(n))
+	networkmenu.invoke(0)
+	mainmenu.add("cascade", ulabel="_Network", menu=networkmenu)
+	mainmenu.add("separator")
+	mainmenu.add("command", compound="left", image=_exit, ulabel="_Close", command=sys.exit)
+	menubar.add("cascade", ulabel="_Pool", menu=mainmenu)
+	toplevel.configure(menu=menubar)
 
 	toplevel.protocol('WM_DELETE_WINDOW', sys.exit)
 	toplevel.minsize(450, int(450*1.618033989))
