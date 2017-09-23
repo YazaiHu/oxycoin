@@ -92,7 +92,7 @@ if __name__ == "__main__":
 	def checkIfNeedAnalyse():
 		global MEMORY
 		result = False
-		for key in ["delay", "highest"]:
+		for key in ["delay"]:
 			known = MEMORY.get(key, None)
 			actual = widgets.OptionPannel.options.get(key, None)
 			if actual != known:
@@ -106,7 +106,7 @@ if __name__ == "__main__":
 	def checkIfNeedUpdate():
 		global MEMORY
 		result = False
-		for key in ["lowest", "blacklist"]:
+		for key in ["lowest", "blacklist", "highest"]:
 			known = MEMORY.get(key, None)
 			actual = widgets.OptionPannel.options.get(key, None)
 			if actual != known:

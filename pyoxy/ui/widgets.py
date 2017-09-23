@@ -14,7 +14,7 @@ class DataView(yawTtk.Tree):
 		yawTtk.Tree.__init__(self, parent, cnf, **kw)
 		self.tag_configure("even", background="lavender")
 		self.tag_configure("odd", background="lightblue")
-		self.tag_configure("treating", background="SystemHighLight", foreground="white")
+		self.tag_configure("treating", background="steelblue", foreground="white")
 		self.tag_configure("okay", background="lightgreen")
 		self.tag_configure("error", background="red", foreground="white")
 		self.rows = []
@@ -132,7 +132,7 @@ class AddressPanel(yawTtk.Frame):
 			AddressPanel.voters = []
 			self.label.configure(
 				image = self._cloud,
-				background = "SystemButtonFace",
+				background = self["background"], #"SystemButtonFace",
 				compound = "image"
 			)
 
@@ -169,7 +169,7 @@ class OptionPannel(yawTtk.Frame):
 		yawTtk.Label(self, padding=(0,0,2,0), text="Maximum payout").grid(row=3, column=0, sticky="new", padx=4)
 		yawTtk.Entry(self, font=("tahoma", "10"), padding=(2,0), relief="flat", textvariable=self.highest).grid(row=3, pady=1, column=1, sticky="w", padx=4).bind("<FocusOut>", lambda e,k="highest",d=None: self.updateValue(e,k,d))
 		yawTtk.Label(self, padding=(0,0,2,0), text="Blacklisted addresses").grid(row=4, column=0, sticky="new", padx=4)
-		self.blacklist = yawTtk.Tkinter.Text(self, font=("tahoma", "10"), width=0, height=3, border=0, highlightthickness=1, highlightbackground="grey", highlightcolor="SystemHighLight", relief="solid", wrap="word")
+		self.blacklist = yawTtk.Tkinter.Text(self, font=("tahoma", "10"), width=0, height=3, border=0, highlightthickness=1, highlightbackground="grey", highlightcolor="steelblue", relief="solid", wrap="word")
 		self.blacklist.bind("<FocusOut>", self.updateList)
 		self.blacklist.grid(row=4, pady=1, column=1, sticky="nesw", padx=4)
 		self.blacklist.insert("1.0", ",".join(OptionPannel.options.get("blacklist", [])))
@@ -273,10 +273,10 @@ class Secret(yawTtk.Frame):
 		self.columnconfigure(0, weight=1)
 		self.rowconfigure(1, minsize=border)
 
-		self.secret = yawTtk.Tkinter.Text(self, font=("tahoma", "10"), width=0, height=2, border=2, highlightthickness=1, highlightbackground="grey", highlightcolor="SystemHighLight", relief="flat", wrap="word")
+		self.secret = yawTtk.Tkinter.Text(self, font=("tahoma", "10"), width=0, height=2, border=2, highlightthickness=1, highlightbackground="grey", highlightcolor="steelblue", relief="flat", wrap="word")
 		self.secret.grid(row=0, column=0, sticky="nesw", padx=4)
 		self.border = yawTtk.Frame(self).grid(row=1, column=0, sticky="nesw", padx=4)
-		self.border["background"] = "SystemHighLight"
+		self.border["background"] = "steelblue"
 
 
 class SecretFrame(yawTtk.Frame):
