@@ -9,6 +9,7 @@ import io, os, sys, json, random, requests, logging, traceback
 
 __TIMEOUT__ = 3
 POST, PUT, GET = [], [], []
+PEERS = []
 
 #################
 ## API methods ##
