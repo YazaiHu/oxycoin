@@ -327,6 +327,24 @@ class SecretFrame(yawTtk.Frame):
 		return True if self.first.border["background"] == self.second.border["background"] == "lightgreen" else False
 
 
+class ProgressFrame(yawTtk.Frame):
+
+	def __init__(self, master=None, cnf={}, **kw):
+		yawTtk.Frame.__init__(self, master, cnf={}, **kw)
+		self.columnconfigure(0, weight=1)
+		
+		self.variable = yawTtk.StringVar(self, "100%", name="%s.progress"%self._w)
+		self.root = yawTtk.Label(self, textvariable=self.variable, anchor="center").grid(row=1, column=0, sticky="nesw")
+		self.bar = yawTtk.Frame(self, background="steelblue").place(x=0, y=0, relheight=1.0, relwidth=1.0, anchor="nw")
+		self.label = yawTtk.Label(self.bar, padding=0, textvariable=self.variable, background="steelblue", foreground="white").place(relheight=1.0, y=0, anchor="n")
+
+	def set(self, value):
+		self.variable.set("%d%%"%(value*100))
+		self.bar.place_configure(relwidth=value)
+		self.label.place_configure(x=self.root.winfo_width()/2)
+		self.update()
+
+
 class PayoutFrame(yawTtk.Frame):
 
 	voterforces = {}
@@ -346,14 +364,23 @@ class PayoutFrame(yawTtk.Frame):
 		self.data.configureHeader()
 		yawTtk.Autoscrollbar(frame, target=self.data, orient="horizontal").grid(row=1, column=0, sticky="nesw")
 		yawTtk.Autoscrollbar(frame, target=self.data, orient="vertical").grid(row=0, column=1, rowspan=2, sticky="nesw")
+		self.progress = ProgressFrame(self, relief="solid", padding=2)
 
 	def analyse(self):
+		self.progress.place(anchor="center", relx=0.5, rely=0.5, relwidth=0.6)
 		PayoutFrame.busy = True
 		self.data.rows = []
 		self.data.populate()
 		delay = OptionPannel.options.get("delay", 7)
-		PayoutFrame.voterforces = dict([address, util.getVoteForce(address, days=delay)] for address in [v["address"] for v in AddressPanel.voters])
+		addresses = [v["address"] for v in AddressPanel.voters]
+		i, n = 0, max(1, len(addresses))
+		self.progress.set(0)
+		for address in addresses:
+			i += 1
+			PayoutFrame.voterforces[address] = util.getVoteForce(address, days=delay)
+			self.progress.set(float(i)/n)
 		PayoutFrame.busy = False
+		self.progress.place_forget()
 
 	def compute(self):
 		amount = ShareFrame.satoshi
