@@ -159,14 +159,6 @@ if __name__ == "__main__":
 			toplevel["background"] = "red"
 			button.state("disabled")
 
-	__heartbeat = heartBeat()
-
-	def exit():
-		options.saveConf()
-		__heartbeat.set()
-		__heartbeat.lock()
-		sys.exit()
-
 	def useNetwork(network):
 		try:
 			api.use(network)
@@ -174,14 +166,19 @@ if __name__ == "__main__":
 			pass
 		else:
 			toplevel.tk.setvar("ui.network", network)
-
+			address.wallet.set("")
 			combovalues = amount.combo["values"]
 			amount.combo.configure(values=(cfg.symbol, ) + combovalues[1:])
 			if amount.what.get() not in amount.combo["values"]:
 				amount.what.set(cfg.symbol)
 			else:
 				amount.what.set(amount.what.get())
-			toplevel.title("%s Pool Payout"%network.capitalize())
+			toplevel.title("Pool Payout - %s network"%network.capitalize())
+
+	def exit():
+		options.saveConf()
+		__heartbeat.set()
+		sys.exit()
 
 	# menu widget
 	menubar = widgets.yawTtk.Menu(root)
@@ -192,13 +189,14 @@ if __name__ == "__main__":
 	networkmenu.invoke(0)
 	mainmenu.add("cascade", ulabel="_Network", menu=networkmenu)
 	mainmenu.add("separator")
-	mainmenu.add("command", compound="left", image=_exit, ulabel="_Close", command=sys.exit)
+	mainmenu.add("command", compound="left", image=_exit, ulabel="_Close", command=exit)
 	menubar.add("cascade", ulabel="_Pool", menu=mainmenu)
 	toplevel.configure(menu=menubar)
 
-	toplevel.protocol('WM_DELETE_WINDOW', sys.exit)
+	toplevel.protocol('WM_DELETE_WINDOW', exit)
 	toplevel.minsize(450, int(450*1.618033989))
 	toplevel.maxsize(450, int(450*1.618033989))
 	toplevel.resizable(False, False)
 	toplevel.deiconify()
+	__heartbeat = heartBeat()
 	toplevel.mainloop()
