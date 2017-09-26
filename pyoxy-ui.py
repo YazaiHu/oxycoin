@@ -156,14 +156,24 @@ if __name__ == "__main__":
 			button.state("disabled")
 
 	def useNetwork(network):
+		global HEARTBEAT
 		try:
 			api.use(network)
 		except:
 			pass
 		else:
+			try: HEARTBEAT.set()
+			except: pass
+			# clear payout panel
 			payout.data.rows = []
 			payout.data.populate()
+			widgets.PayoutFrame.voterforces = {}
+			# clear address panel
+			widgets.AddressPanel.address = None
+			widgets.AddressPanel.status = {}
+			widgets.AddressPanel.voters = []
 			address.wallet.set("")
+			# update UI
 			toplevel.tk.setvar("ui.network", network)
 			combovalues = amount.combo["values"]
 			amount.combo.configure(values=(cfg.symbol, ) + combovalues[1:])
@@ -172,10 +182,12 @@ if __name__ == "__main__":
 			else:
 				amount.what.set(amount.what.get())
 			toplevel.title("Pool Payout - %s network"%network.capitalize())
+			HEARTBEAT = heartBeat()
 
 	def exit():
+		global HEARTBEAT
 		options.saveConf()
-		__heartbeat.set()
+		HEARTBEAT.set()
 		sys.exit()
 
 	# menu widget
@@ -196,5 +208,4 @@ if __name__ == "__main__":
 	toplevel.maxsize(450, int(450*1.618033989))
 	toplevel.resizable(False, False)
 	toplevel.deiconify()
-	__heartbeat = heartBeat()
 	toplevel.mainloop()
