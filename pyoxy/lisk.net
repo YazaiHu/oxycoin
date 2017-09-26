@@ -8,7 +8,7 @@
 		"port" : 8000
 	},
 	"begintime" : [2016, 5, 24, 17, 0, 0, 0],
-	"token" : "LSK",
+	"token" : "LISK",
 	"symbol" : "LSK",
 	"delegate": 101,
 	"marker": "L"

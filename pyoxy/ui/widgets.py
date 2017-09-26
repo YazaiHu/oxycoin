@@ -158,7 +158,7 @@ class OptionPannel(yawTtk.Frame):
 		yawTtk.Frame.__init__(self, master, cnf={}, **kw)
 		self.columnconfigure(1, weight=1)
 
-		self.delay = yawTtk.StringVar(self, "%s"%OptionPannel.options.get("delay", 7), "%s.delay"%self._w)
+		self.delay = yawTtk.StringVar(self, "%s"%OptionPannel.options.get("delay", 0), "%s.delay"%self._w)
 		self.lowest = yawTtk.StringVar(self, "%s"%OptionPannel.options.get("lowest", (cfg.fees["send"]/100000000)), "%s.lowest"%self._w)
 		self.highest = yawTtk.StringVar(self, "%s"%OptionPannel.options.get("highest", None), "%s.highest"%self._w)
 		yawTtk.Label(self, font=("tahoma", "8", "bold"), text="Options").grid(row=0, column=0, columnspan=2, sticky="nsw", padx=4, pady=4)
@@ -177,7 +177,7 @@ class OptionPannel(yawTtk.Frame):
 	def loadConf(self):
 		self.blacklist.delete("1.0", "end")
 		OptionPannel.options = util.loadJson("%s-%s.json" % (cfg.network, AddressPanel.status.get("username", "config")))
-		self.delay.set("%s"%OptionPannel.options.get("delay", 7))
+		self.delay.set("%s"%OptionPannel.options.get("delay", 0))
 		self.lowest.set("%s"%OptionPannel.options.get("lowest", (cfg.fees["send"]/100000000)))
 		self.highest.set("%s"%OptionPannel.options.get("highest", None))
 		self.blacklist.insert("1.0", ",".join(OptionPannel.options.get("blacklist", [])))
@@ -205,12 +205,14 @@ class OptionPannel(yawTtk.Frame):
 			if isinstance(widget, yawTtk.Entry):
 				widget.state("disabled")
 			self.blacklist["state"] = "disabled"
+			self.blacklist["background"] = self["background"]
 
 	def enable(self):
 		for widget in self.children.values():
 			if isinstance(widget, yawTtk.Entry):
 				widget.state("!disabled")
 			self.blacklist["state"] = "normal"
+			self.blacklist["background"] = "white"
 
 	def destroy(self):
 		self.saveConf()
@@ -339,7 +341,7 @@ class ProgressFrame(yawTtk.Frame):
 		self.label = yawTtk.Label(self.bar, padding=0, textvariable=self.variable, background="steelblue", foreground="white").place(relheight=1.0, y=0, anchor="n")
 
 	def set(self, value):
-		self.variable.set("%d%%"%(value*100))
+		self.variable.set("%.1f%%"%(value*100))
 		self.bar.place_configure(relwidth=value)
 		self.label.place_configure(x=self.root.winfo_width()/2)
 		self.update()
@@ -367,20 +369,20 @@ class PayoutFrame(yawTtk.Frame):
 		self.progress = ProgressFrame(self, relief="solid", padding=2)
 
 	def analyse(self):
-		self.progress.place(anchor="center", relx=0.5, rely=0.5, relwidth=0.6)
 		PayoutFrame.busy = True
 		self.data.rows = []
 		self.data.populate()
-		delay = OptionPannel.options.get("delay", 7)
-		addresses = [v["address"] for v in AddressPanel.voters]
-		i, n = 0, max(1, len(addresses))
+		self.progress.place(anchor="center", relx=0.5, rely=0.5, relwidth=0.6)
 		self.progress.set(0)
-		for address in addresses:
+		delay = OptionPannel.options.get("delay", 0)
+		i, n = 0, max(1, len(AddressPanel.voters))
+		for voter in AddressPanel.voters:
 			i += 1
-			PayoutFrame.voterforces[address] = util.getVoteForce(address, days=delay)
+			address = voter["address"]
+			PayoutFrame.voterforces[address] = util.getVoteForce(address, days=delay, balance=float(voter.get("balance", 0)))
 			self.progress.set(float(i)/n)
-		PayoutFrame.busy = False
 		self.progress.place_forget()
+		PayoutFrame.busy = False
 
 	def compute(self):
 		amount = ShareFrame.satoshi

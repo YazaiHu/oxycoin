@@ -91,17 +91,13 @@ if __name__ == "__main__":
 
 	def checkIfNeedAnalyse():
 		global MEMORY
-		result = False
-		for key in ["delay"]:
-			known = MEMORY.get(key, None)
-			actual = widgets.OptionPannel.options.get(key, None)
-			if actual != known:
-				MEMORY[key] = actual
-				result = True
-			else:
-				result = False
-			if result:
-				return result
+		known = MEMORY.get("delay", 0)
+		actual = widgets.OptionPannel.options.get("delay", 0)
+		if actual != known:
+			MEMORY["delay"] = actual
+			return True
+		else:
+			return False
 
 	def checkIfNeedUpdate():
 		global MEMORY
@@ -165,8 +161,10 @@ if __name__ == "__main__":
 		except:
 			pass
 		else:
-			toplevel.tk.setvar("ui.network", network)
+			payout.data.rows = []
+			payout.data.populate()
 			address.wallet.set("")
+			toplevel.tk.setvar("ui.network", network)
 			combovalues = amount.combo["values"]
 			amount.combo.configure(values=(cfg.symbol, ) + combovalues[1:])
 			if amount.what.get() not in amount.combo["values"]:
