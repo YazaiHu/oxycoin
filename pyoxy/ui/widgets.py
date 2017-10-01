@@ -159,7 +159,7 @@ class OptionPannel(yawTtk.Frame):
 		self.columnconfigure(1, weight=1)
 
 		self.delay = yawTtk.StringVar(self, "%s"%OptionPannel.options.get("delay", 0), "%s.delay"%self._w)
-		self.lowest = yawTtk.StringVar(self, "%s"%OptionPannel.options.get("lowest", (cfg.fees["send"]/100000000)), "%s.lowest"%self._w)
+		self.lowest = yawTtk.StringVar(self, "%s"%OptionPannel.options.get("lowest", (cfg.fees.get("send", 0)/100000000)), "%s.lowest"%self._w)
 		self.highest = yawTtk.StringVar(self, "%s"%OptionPannel.options.get("highest", None), "%s.highest"%self._w)
 		yawTtk.Label(self, font=("tahoma", "8", "bold"), text="Options").grid(row=0, column=0, columnspan=2, sticky="nsw", padx=4, pady=4)
 		yawTtk.Label(self, padding=(0,0,2,0), text="Delay in days").grid(row=1, column=0, sticky="new", padx=4)
@@ -178,7 +178,7 @@ class OptionPannel(yawTtk.Frame):
 		self.blacklist.delete("1.0", "end")
 		OptionPannel.options = util.loadJson("%s-%s.json" % (cfg.network, AddressPanel.status.get("username", "config")))
 		self.delay.set("%s"%OptionPannel.options.get("delay", 0))
-		self.lowest.set("%s"%OptionPannel.options.get("lowest", (cfg.fees["send"]/100000000)))
+		self.lowest.set("%s"%OptionPannel.options.get("lowest", (cfg.fees.get("send", 0)/100000000)))
 		self.highest.set("%s"%OptionPannel.options.get("highest", None))
 		self.blacklist.insert("1.0", ",".join(OptionPannel.options.get("blacklist", [])))
 
@@ -250,7 +250,7 @@ class ShareFrame(yawTtk.Frame):
 			value = 0.
 		else:
 			if what == "%":
-				value = (float(AddressPanel.status.get("balance", 0))*amount/100 - cfg.fees["send"])/100000000.
+				value = (float(AddressPanel.status.get("balance", 0))*amount/100 - cfg.fees.get("send", 0))/100000000.
 			elif what in ["$", "€", "£", "¥"]:
 				price = util.getTokenPrice(cfg.token, {"$":"usd", "€":"eur", "£":"gbp", "¥":"cny"}[what])
 				value = amount / price
@@ -400,18 +400,18 @@ class PayoutFrame(yawTtk.Frame):
 
 		self.data.rows = []
 		if payroll > 100000000:
-			minimum = OptionPannel.options.get("lowest", cfg.fees["send"]/100000000)*100000000
+			minimum = OptionPannel.options.get("lowest", cfg.fees.get("send", 0)/100000000)*100000000
 			saved_payout = util.loadJson("%s-%s.rnd" % (cfg.network, AddressPanel.status.get("username", "")))
 
 			for address, weight in self.compute():
 				saved = saved_payout.get(address, 0.)
-				payout = payroll * weight + saved*100000000 - cfg.fees["send"]
+				payout = payroll * weight + saved*100000000 - cfg.fees.get("send", 0)
 				row = {"address":address, "weight (%)":round(weight*100,2), "payout":round(payout/100000000, 8), "send":"Yes", "saved":saved}
 				if payout > minimum:
 					saved_payout.pop(address, None)
 					self.data.rows.append(row)
-				elif payout + cfg.fees["send"] > 0:
-					saved_payout[address] = payout + cfg.fees["send"]
+				elif payout + cfg.fees.get("send", 0) > 0:
+					saved_payout[address] = payout + cfg.fees.get("send", 0)
 					row["send"] = "No"
 					row["payout"] = round(saved_payout[address]/100000000, 8)
 					self.data.rows.append(row)
