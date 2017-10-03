@@ -176,7 +176,7 @@ if __name__ == "__main__":
 			# update UI
 			toplevel.tk.setvar("ui.network", network)
 			combovalues = amount.combo["values"]
-			amount.combo.configure(values=(cfg.symbol, ) + combovalues[1:])
+			amount.combo.configure(values=(u"%s"%cfg.symbol, ) + combovalues[1:])
 			if amount.what.get() not in amount.combo["values"]:
 				amount.what.set(cfg.symbol)
 			else:
