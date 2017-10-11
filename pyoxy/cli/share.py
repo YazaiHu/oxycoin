@@ -1,7 +1,7 @@
 # -*- encoding: utf8 -*-
 # © Toons
 
-from .. import __PY3__, __FROZEN__, ROOT, api, cfg, util
+from .. import __PY3__, __FROZEN__, ROOT, api, cfg
 
 import os, io, sys, json
 

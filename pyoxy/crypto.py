@@ -81,15 +81,14 @@ def bakeTransaction(**kw):
 		
 	# put mandatory data
 	payload = {
-		"signSignature": None,
 		"timestamp": int(slots.getTime()),
 		"type": int(kw.get("type", 0)),
 		"amount": int(kw.get("amount", 0)),
 		"fee": cfg.fees.get({
 			0: "send",
-			# 1: "delegate",
-			# 2: "secondsignature",
-			# 3: "vote",
+			1: "secondsignature",
+			2: "delegate",
+			3: "vote",
 			# 4: "multisignature",
 			# 5: "dapp"
 		}[kw.get("type", 0)])
@@ -97,10 +96,8 @@ def bakeTransaction(**kw):
 	payload["senderPublicKey"] = public
 
 	# add optional data
-	if "requesterPublicKey" in kw:
-		payload["senderPublicKey"] = kw["requesterPublicKey"]
-	if "recipientId" in kw:
-		payload["recipientId"] = kw["recipientId"]
+	for key in (k for k in ["requesterPublicKey", "recipientId", "asset"] if k in kw):
+		payload[key] = kw[key]
 
 	# sign payload
 	payload["signature"] = getSignature(payload, private)

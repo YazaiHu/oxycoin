@@ -143,9 +143,6 @@ def reprTransaction(tx):
 		"to": shortAddress(tx.get("recipientId", "No one"))
 	}
 
-def sendTransaction(**kw):
-	return api.post("/peer/transactions", transactions=[crypto.bakeTransaction(**kw)])
-
 def getCandidates():
 	candidates = []
 	offset = len(candidates)
