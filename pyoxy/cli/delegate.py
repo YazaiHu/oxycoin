@@ -73,7 +73,7 @@ def status(param):
 		sys.stdout.write("No linked account\n")
 
 def share(param):
-	global ADDRESS, PUBLICKEY, PRIVKEY1, PRIVKEY2, DELEGATE
+	global ADDRESS, PUBLICKEY, PRIVKEY1, PRIVKEY2, DELEGATE, DAEMON_PAYROLL
 
 	if not ADDRESS:
 		sys.stdout.write("No linked account\n")
@@ -131,8 +131,9 @@ def share(param):
 		if len(log):
 			util.prettyPrint(log)
 			if util.askYesOrNo("Validate ?"):
+				ongoing = {}
 				for (payout, recipientId) in transactions:
-					sys.stdout.write("Sending %s %.8f to %s...\n" % (cfg.token, payout/100000000, recipientId))
+					sys.stdout.write("Sending %.8f %s to %s...\n" % (cfg.token, payout/100000000, recipientId))
 					payload = crypto.bakeTransaction(
 						amount=payout,
 						publicKey=PUBLICKEY,
@@ -140,12 +141,39 @@ def share(param):
 						secondPrivateKey=PRIVKEY2,
 						recipientId=recipientId,
 					)
+					ongoing[payload["id"]] = payload
 					util.prettyPrint(api.post("/peer/transactions", transactions=[payload]), log=True)
-				util.dumpJson(round_, "%s.rnd" % DELEGATE["username"])
+				util.dumpJson(ongoing, "%s-%s.ongoing" % (cfg.network, DELEGATE["username"]))
+				util.dumpJson(round_, "%s-%s.rnd" % (cfg.network, DELEGATE["username"]))
+				sys.stdout.write("Checking sent transactions, please wait...\n")
+				DAEMON_PAYROLL = _checkPayroll()
 			else:
 				sys.stdout.write("Broadcast canceled\n")
 
 # --------------
+@util.setInterval(10)
+def _checkPayroll():
+	global DAEMON_PAYROLL
+
+	ongoing_json = "%s-%s.ongoing" % (cfg.network, DELEGATE["username"])
+	ongoing = util.loadJson(ongoing_json)
+
+	for tx_id, payload in list(ongoing.items()):
+		if api.GET.transactions.get(id=tx_id).get("success", False):
+			ongoing.pop(tx_id)
+		else:
+			sys.stdout.write("\nResending transaction #%s:\n    %.8f %s to %s...\n" % (
+				tx_id,
+				payload["amount"]/100000000,
+				cfg.token, payload["recipientId"]
+			))
+			util.prettyPrint(api.post("/peer/transactions", transactions=[payload]), log=True)
+	
+	util.dumpJson(ongoing, ongoing_json)
+	if not len(ongoing):
+		sys.stdout.write("Check finished, all transaction broadcasted\n")
+		DAEMON_PAYROLL.set()
+
 def _whereami():
 	if ADDRESS:
 		return "delegate[%s]" % util.shortAddress(ADDRESS)
