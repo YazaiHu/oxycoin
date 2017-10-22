@@ -24,7 +24,7 @@ Subcommands:
 '''
 
 from .. import cfg, api, util, crypto
-from . import share as _share
+from . import share as _share, PROMPT
 
 import io, os, sys, collections
 
@@ -73,7 +73,7 @@ def status(param):
 		sys.stdout.write("No linked account\n")
 
 def share(param):
-	global ADDRESS, PUBLICKEY, PRIVKEY1, PRIVKEY2, DELEGATE, DAEMON_PAYROLL
+	global ADDRESS, PUBLICKEY, PRIVKEY1, PRIVKEY2, DELEGATE, DAEMON_PAYROLL, PROMPT
 
 	if not ADDRESS:
 		sys.stdout.write("No linked account\n")
@@ -133,7 +133,7 @@ def share(param):
 			if util.askYesOrNo("Validate ?"):
 				ongoing = {}
 				for (payout, recipientId) in transactions:
-					sys.stdout.write("Sending %.8f %s to %s...\n" % (cfg.token, payout/100000000, recipientId))
+					sys.stdout.write("Sending %.8f %s to %s...\n" % (payout/100000000, cfg.token, recipientId))
 					payload = crypto.bakeTransaction(
 						amount=payout,
 						publicKey=PUBLICKEY,
@@ -145,7 +145,8 @@ def share(param):
 					util.prettyPrint(api.post("/peer/transactions", transactions=[payload]), log=True)
 				util.dumpJson(ongoing, "%s-%s.ongoing" % (cfg.network, DELEGATE["username"]))
 				util.dumpJson(round_, "%s-%s.rnd" % (cfg.network, DELEGATE["username"]))
-				sys.stdout.write("Checking sent transactions, please wait...\n")
+				sys.stdout.write("Transaction check will be run soon, please wait...\n")
+				PROMPT.state(False)
 				DAEMON_PAYROLL = _checkPayroll()
 			else:
 				sys.stdout.write("Broadcast canceled\n")
@@ -153,16 +154,17 @@ def share(param):
 # --------------
 @util.setInterval(10)
 def _checkPayroll():
-	global DAEMON_PAYROLL
+	global DAEMON_PAYROLL, PROMPT
 
 	ongoing_json = "%s-%s.ongoing" % (cfg.network, DELEGATE["username"])
 	ongoing = util.loadJson(ongoing_json)
 
+	sys.stdout.write("\n---\nPayroll check, please wait...\n")
 	for tx_id, payload in list(ongoing.items()):
 		if api.GET.transactions.get(id=tx_id).get("success", False):
 			ongoing.pop(tx_id)
 		else:
-			sys.stdout.write("\nResending transaction #%s:\n    %.8f %s to %s...\n" % (
+			sys.stdout.write("Resending transaction #%s:\n    %.8f %s to %s\n" % (
 				tx_id,
 				payload["amount"]/100000000,
 				cfg.token, payload["recipientId"]
@@ -171,8 +173,12 @@ def _checkPayroll():
 	
 	util.dumpJson(ongoing, ongoing_json)
 	if not len(ongoing):
-		sys.stdout.write("Check finished, all transaction broadcasted\n")
+		sys.stdout.write("\nCheck finished, all transaction broadcasted\nType <Enter> to take the hand...")
 		DAEMON_PAYROLL.set()
+		PROMPT.state(True)
+	else:
+		sys.stdout.write("\n%d transaction went missing in blockchain\nPlease wait 10 seconds for another check...\n" % len(ongoing))
+
 
 def _whereami():
 	if ADDRESS:

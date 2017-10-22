@@ -8,8 +8,6 @@ import io, os, sys, shlex, docopt, logging, traceback, collections
 
 rootfolder = os.path.normpath(os.path.abspath(os.path.dirname(sys.executable) if __FROZEN__ else __path__[0]))
 
-from . import network, account, delegate
-
 __doc__ = """Welcome to pyoxy-cli [Python %(python)s / pyoxy %(pyoxy)s]
 Available commands: %(sets)s""" % {"python":sys.version.split()[0], "pyoxy":__version__, "sets": ", ".join(__all__)}
 
@@ -19,6 +17,7 @@ def _whereami():
 	return ""
 
 class _Prompt(object):
+	enable = True
 
 	def __setattr__(self, attr, value):
 		object.__setattr__(self, attr, value)
@@ -28,10 +27,15 @@ class _Prompt(object):
 			"hoc": "hot" if cfg.hotmode else "cold",
 			"net": cfg.network,
 			"wai": self.module._whereami()
-		}
+		} if _Prompt.enable else ""
+
+	def state(self, state=True):
+		_Prompt.enable = state
 
 PROMPT = _Prompt()
 PROMPT.module = sys.modules[__name__]
+
+from . import network, account, delegate
 
 def parse(argv):
 	if argv[0] in __all__:
@@ -69,7 +73,7 @@ def start():
 		command = input(PROMPT)
 		argv = shlex.split(command)
 
-		if len(argv):
+		if len(argv) and _Prompt.enable:
 			cmd, arg = parse(argv)
 			if not cmd:
 				exit = True
