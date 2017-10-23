@@ -14,5 +14,6 @@
 	"token" : "OXY",
 	"symbol" : "OXY",
 	"delegate": 201,
-	"marker": "X"
+	"marker": "X",
+	"blocktime": 15
 }

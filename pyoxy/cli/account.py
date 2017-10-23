@@ -17,6 +17,7 @@ Subcommands:
 '''
 
 from .. import ROOT, cfg, api, util, crypto
+from . import checkRegisteredTx
 
 import io, os, sys
 
@@ -79,8 +80,12 @@ def send(param):
 	payload["address"] = ADDRESS
 
 	if util.askYesOrNo("Broadcast %s?" % util.reprTransaction(payload)):
+		registery = util.loadJson("account.registry")
+		registery[payload["id"]] = payload
+		util.dumpJson(registery, "account.registery")
 		sys.stdout.write("Sending %s %.8f to %s...\n" % (cfg.token, payload["amount"]/100000000, payload["recipientId"]))
 		util.prettyPrint(api.post("/peer/transactions", transactions=[payload]), log=True)
+		checkRegisteredTx("account.registery")
 	else:
 		sys.stdout.write("Broadcast canceled\n")
 		return

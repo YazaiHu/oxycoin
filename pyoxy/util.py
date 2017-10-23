@@ -19,7 +19,7 @@ def setInterval(interval):
 >>> stop = tick() # print 'Tick' every 10 sec
 >>> type(stop)
 <class 'threading.Event'>
->>> stop.set() # stop printing 'Tick' every 10 sec
+>>> stop.set() # stop printing 'Tick' immediatly
 """
 	def decorator(function):
 		def wrapper(*args, **kwargs):

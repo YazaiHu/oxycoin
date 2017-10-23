@@ -3,7 +3,7 @@
 
 __all__ = ["network", "account", "delegate"]
 
-from .. import cfg, __PY3__, __FROZEN__, __version__
+from .. import cfg, api, util, __PY3__, __FROZEN__, __version__
 import io, os, sys, shlex, docopt, logging, traceback, collections
 
 rootfolder = os.path.normpath(os.path.abspath(os.path.dirname(sys.executable) if __FROZEN__ else __path__[0]))
@@ -34,8 +34,6 @@ class _Prompt(object):
 
 PROMPT = _Prompt()
 PROMPT.module = sys.modules[__name__]
-
-from . import network, account, delegate
 
 def parse(argv):
 	if argv[0] in __all__:
@@ -117,3 +115,36 @@ def start():
 # 		execute(*[l.strip() for l in in_.readlines()])
 # 		in_.close()
 
+def checkRegisteredTx(registry):
+	global DAEMON_CHECK, PROMPT
+	PROMPT.state(False)
+	sys.stdout.write("Transaction check will be run soon, please wait...\n")
+
+	@util.setInterval(cfg.blocktime)
+	def _checkRegisteredTx(registry):
+		global PROMPT
+		registered = util.loadJson(registry)
+
+		sys.stdout.write("\n---\nRegistered transaction check, please wait...\n")
+		for tx_id, payload in list(registered.items()):
+			if api.GET.transactions.get(id=tx_id).get("success", False):
+				registered.pop(tx_id)
+			else:
+				sys.stdout.write("Resending transaction #%s:\n    %.8f %s to %s\n" % (
+					tx_id,
+					payload["amount"]/100000000,
+					cfg.token, payload["recipientId"]
+				))
+				util.prettyPrint(api.post("/peer/transactions", transactions=[payload]), log=True)
+		
+		util.dumpJson(registered, registry)
+		if not len(registered):
+			sys.stdout.write("\nCheck finished, all transactiosn broadcasted\nType <Enter> to take the hand...")
+			DAEMON_CHECK.set()
+			PROMPT.state(True)
+		else:
+			sys.stdout.write("\n%d transaction(s) went missing in blockchain\nPlease wait %d seconds for another check...\n" % (len(registered), cfg.blocktime))
+
+	DAEMON_CHECK = _checkRegisteredTx(registry)
+
+from . import network, account, delegate

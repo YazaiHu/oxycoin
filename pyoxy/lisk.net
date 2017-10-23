@@ -11,5 +11,6 @@
 	"token" : "LISK",
 	"symbol" : "Ⱡ",
 	"delegate": 101,
-	"marker": "L"
+	"marker": "L",
+	"blocktime": 10
 }

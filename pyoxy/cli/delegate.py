@@ -24,7 +24,7 @@ Subcommands:
 '''
 
 from .. import cfg, api, util, crypto
-from . import share as _share, PROMPT
+from . import share as _share, checkRegisteredTx
 
 import io, os, sys, collections
 
@@ -73,7 +73,7 @@ def status(param):
 		sys.stdout.write("No linked account\n")
 
 def share(param):
-	global ADDRESS, PUBLICKEY, PRIVKEY1, PRIVKEY2, DELEGATE, DAEMON_PAYROLL, PROMPT
+	global ADDRESS, PUBLICKEY, PRIVKEY1, PRIVKEY2, DELEGATE
 
 	if not ADDRESS:
 		sys.stdout.write("No linked account\n")
@@ -111,7 +111,7 @@ def share(param):
 			contribution = _share.ceilContribution(contribution, sum(contribution.values())*maximum/amount)
 		contribution = _share.normContribution(contribution)
 
-		round_ = util.loadJson("%s-%s.rnd" % (cfg.network, DELEGATE["username"]))
+		round_ = util.loadJson("%s-%s.waiting" % (cfg.network, DELEGATE["username"]))
 		payroll = amount * 100000000.
 		minimum *= 100000000.
 
@@ -143,43 +143,15 @@ def share(param):
 					)
 					ongoing[payload["id"]] = payload
 					util.prettyPrint(api.post("/peer/transactions", transactions=[payload]), log=True)
-				util.dumpJson(ongoing, "%s-%s.ongoing" % (cfg.network, DELEGATE["username"]))
-				util.dumpJson(round_, "%s-%s.rnd" % (cfg.network, DELEGATE["username"]))
-				sys.stdout.write("Transaction check will be run soon, please wait...\n")
-				PROMPT.state(False)
-				DAEMON_PAYROLL = _checkPayroll()
+				util.dumpJson(round_, "%s-%s.waiting" % (cfg.network, DELEGATE["username"]))
+				
+				ongoing_json = "%s-%s.ongoing" % (cfg.network, DELEGATE["username"])
+				util.dumpJson(ongoing, ongoing_json)
+				checkRegisteredTx(ongoing_json)
 			else:
 				sys.stdout.write("Broadcast canceled\n")
 
 # --------------
-@util.setInterval(10)
-def _checkPayroll():
-	global DAEMON_PAYROLL, PROMPT
-
-	ongoing_json = "%s-%s.ongoing" % (cfg.network, DELEGATE["username"])
-	ongoing = util.loadJson(ongoing_json)
-
-	sys.stdout.write("\n---\nPayroll check, please wait...\n")
-	for tx_id, payload in list(ongoing.items()):
-		if api.GET.transactions.get(id=tx_id).get("success", False):
-			ongoing.pop(tx_id)
-		else:
-			sys.stdout.write("Resending transaction #%s:\n    %.8f %s to %s\n" % (
-				tx_id,
-				payload["amount"]/100000000,
-				cfg.token, payload["recipientId"]
-			))
-			util.prettyPrint(api.post("/peer/transactions", transactions=[payload]), log=True)
-	
-	util.dumpJson(ongoing, ongoing_json)
-	if not len(ongoing):
-		sys.stdout.write("\nCheck finished, all transaction broadcasted\nType <Enter> to take the hand...")
-		DAEMON_PAYROLL.set()
-		PROMPT.state(True)
-	else:
-		sys.stdout.write("\n%d transaction went missing in blockchain\nPlease wait 10 seconds for another check...\n" % len(ongoing))
-
-
 def _whereami():
 	if ADDRESS:
 		return "delegate[%s]" % util.shortAddress(ADDRESS)

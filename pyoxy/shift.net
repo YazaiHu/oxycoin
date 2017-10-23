@@ -11,5 +11,6 @@
 	"token" : "SHIFT",
 	"symbol" : "SHIFT",
 	"delegate": 101,
-	"marker": "S"
+	"marker": "S",
+	"blocktime": 10
 }
