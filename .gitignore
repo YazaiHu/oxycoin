@@ -141,3 +141,5 @@ $RECYCLE.BIN/
 *.pyoxy
 *.rnd
 *.json
+pyoxy/account.registery
+pyoxy/toxy-toons.ongoing
