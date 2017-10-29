@@ -69,7 +69,6 @@ def post(entrypoint, dic={}, **kw):
 		).text
 		data = json.loads(text)
 	except Exception as error:
-		sys.stdout.write(text + "\n")
 		data = {"success":False, "error":error}
 		if hasattr(error, "__traceback__"):
 			data["details"] = "\n"+("".join(traceback.format_tb(error.__traceback__)).rstrip())
@@ -91,7 +90,6 @@ def put(entrypoint, dic={}, **kw):
 		).text
 		data = json.loads(text)
 	except Exception as error:
-		sys.stdout.write(text + "\n")
 		data = {"success":False, "error":error}
 		if hasattr(error, "__traceback__"):
 			data["details"] = "\n"+("".join(traceback.format_tb(error.__traceback__)).rstrip())
